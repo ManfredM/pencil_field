@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import 'paint.dart';
 
+/// A stroke is a polyline.
 class PencilStroke extends Equatable {
   final List<Point> points;
   final int bezierDistance;
@@ -17,8 +18,10 @@ class PencilStroke extends Equatable {
       required this.bezierDistance,
       required this.pencilPaint});
 
+  /// Returns the number of points that are in this polyline
   int get pointCount => points.length;
 
+  /// Adds a point to the polyline
   PencilStroke addPoint(Point point) {
     return PencilStroke(
         points: [...points, point],
@@ -38,6 +41,8 @@ class PencilStroke extends Equatable {
         pencilPaint: pencilPaint);
   }
 
+  /// Created a versioned json of this stroke. Points are stored in a more
+  /// compressed format to save some space.
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'version': 1,
@@ -47,6 +52,8 @@ class PencilStroke extends Equatable {
     };
   }
 
+  /// Restore a polyline from a json data map. If the version is not supported
+  /// an empty [PencilStroke] with a default [PencilPaint] is returned.
   factory PencilStroke.fromJson(Map<String, dynamic> json) {
     assert(() {
       if (json['version'] == null) {
@@ -93,6 +100,7 @@ class PencilStroke extends Equatable {
     );
   }
 
+  /// Calculate the total extent of this [PencilStroke]
   Size calculateTotalSize() {
     Size size = const Size(0, 0);
     for (final point in points) {
@@ -168,6 +176,9 @@ class PencilStroke extends Equatable {
     return bezierPath;
   }
 
+  /// Returns the bezier distance that is used for drawing the line. iOS returns
+  /// a pretty dense point cloud while Android is optimized and only returns the
+  /// controls points of a bezier curve.
   static int defaultBezierDistance() {
     if (kIsWeb) {
       return 1;

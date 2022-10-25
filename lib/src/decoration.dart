@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// The different styles that are currently supported
 enum PencilDecorationType { blank, lines, chequered, dots }
 
+/// [PencilDecoration] enables configuration the background and layout of a
+/// [PencilField] and a [PencilDisplay].
 class PencilDecoration {
   final PencilDecorationType type;
   final EdgeInsets padding;
@@ -30,6 +33,9 @@ class PencilDecoration {
     }());
   }
 
+  /// Paints the decoration on the given canvas. It can happen that no
+  /// decoration is painted if the total width/height minus the given padding
+  /// is too small (<= 0).
   void paint(Canvas canvas, Size size) {
     if (type == PencilDecorationType.blank) return;
 

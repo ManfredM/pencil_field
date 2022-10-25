@@ -10,3 +10,7 @@
 
 * Even more corrections...
 
+## 0.1.0
+
+* Added more documentation to all functions
+* Removed some duplicate functions

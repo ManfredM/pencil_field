@@ -64,7 +64,7 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
                   lineWidth: 2,
                   padding: const EdgeInsets.all(10),
                 ),
-                pencilOnly: true,
+                pencilOnly: false,
               ),
             ),
           ],

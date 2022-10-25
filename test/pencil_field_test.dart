@@ -173,7 +173,7 @@ void main() {
       expect(controller.drawing.strokeCount, 2);
 
       // Test size calculation
-      final Size size = controller.calculateTotalSize();
+      final Size size = controller.drawing.calculateTotalSize();
       expect(size, givenDrawingSize);
 
       // Test the draw function

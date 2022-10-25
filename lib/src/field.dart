@@ -5,8 +5,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:pencil_field/pencil_field.dart';
 
+/// Callback in case the content of a drawing has changed
 typedef OnPencilDrawingChanged = void Function(PencilDrawing pencilDrawing);
 
+/// The actual widget that handles all freehand input (pan, finger, touchpad,
+/// mouse). It can also be restricted to accepting pen input only.
 class PencilField extends StatefulWidget {
   final PencilFieldController controller;
   final PencilPaint pencilPaint;
@@ -95,6 +98,9 @@ class _PencilFieldState extends State<PencilField> {
   }
 }
 
+/// [PencilDisplay] is a simplified version of [PencilField] that can be used
+/// to just display a drawing. It also accepts a [decoration] to customize the
+/// background.
 class PencilDisplay extends StatelessWidget {
   final PencilDrawing pencilDrawing;
   final PencilDecoration? decoration;

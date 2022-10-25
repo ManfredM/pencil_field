@@ -13,12 +13,15 @@ class PencilDrawing extends Equatable {
   const PencilDrawing({required List<PencilStroke> strokes})
       : _strokes = strokes;
 
+  /// Create a drawing from another drawing
   PencilDrawing.from({required PencilDrawing pencilDrawing})
       : _strokes = pencilDrawing.strokes;
 
+  /// Returns the number of strokes in the drawing. Ephemeral strokes for the
+  /// eraser will never be included in that number.
   int get strokeCount => _strokes.length;
 
-  // This property will cause an exception if not strokes are the list
+  /// This property will cause an exception if not strokes are the list
   PencilStroke get lastStroke {
     assert(() {
       if (_strokes.isEmpty) {
@@ -31,18 +34,27 @@ class PencilDrawing extends Equatable {
     return _strokes.last;
   }
 
+  /// Get access to the strokes in the drawing
   List<PencilStroke> get strokes => _strokes;
 
+  /// Get a stroke at a specific index. This function will cause an exception
+  /// if [index] is not valid.
   PencilStroke atIndex({required int index}) => _strokes[index];
 
+  /// Remove a stroke an a given index. This function will cause an exception
+  /// if [index] is not valid.
   PencilStroke removeAtIndex({required int index}) {
     return _strokes.removeAt(index);
   }
 
+  /// Add a stroke to the drawing
   PencilDrawing add(PencilStroke stroke) {
     return PencilDrawing(strokes: [..._strokes, stroke]);
   }
 
+  /// Adds a single point to the last stroke in the drawing. The stroke
+  /// will only be added if a certain distance is between this and the
+  /// last point to avoid too many points on a stroke path.
   void addPointToLastStroke(Point point) {
     bool addPoint = true;
     if (_strokes.last.points.isNotEmpty) {
@@ -58,10 +70,13 @@ class PencilDrawing extends Equatable {
     }
   }
 
+  /// Removes the last stroke.
   void removeLast() {
+    if (strokeCount - 1 < 0) return;
     _strokes.removeAt(strokeCount - 1);
   }
 
+  /// Calculates the total size of the drawing.
   Size calculateTotalSize() {
     Size drawingSize = const Size(0, 0);
     for (final stroke in _strokes) {
@@ -101,6 +116,8 @@ class PencilDrawing extends Equatable {
     return PencilDrawing(strokes: scaledPencilStrokes);
   }
 
+  /// Create a json representation of the drawing. In the json a version number
+  /// is embedded so that compatibility in the future is guaranteed.
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'version': 1,
@@ -108,6 +125,8 @@ class PencilDrawing extends Equatable {
     };
   }
 
+  /// Restore the object from a json data map. If the version of the json is
+  /// not supported an empty drawing is returned.
   factory PencilDrawing.fromJson(Map<String, dynamic> json) {
     assert(() {
       if (json['version'] == null) {

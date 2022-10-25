@@ -13,11 +13,8 @@ enum PencilMode { write, erase }
 class PencilFieldController {
   PencilMode _mode = PencilMode.write;
 
-  // TODO: add change callback
-
   // all paths that are managed and painted
-  PencilDrawing _strokePaths = const PencilDrawing(strokes: <PencilStroke>[]);
-  Size? _totalSize;
+  PencilDrawing _drawing = const PencilDrawing(strokes: <PencilStroke>[]);
 
   // a path that defines the path of the eraser. This path will be used as soon
   // as PartCreationMode.eraser is active.
@@ -26,13 +23,21 @@ class PencilFieldController {
   bool _atLeastOnePathMarkedForErase = false;
   PencilDrawing _undoPaths = const PencilDrawing(strokes: <PencilStroke>[]);
 
-  PencilDrawing get drawing => _strokePaths;
+  /// Get all strokes in this drawing
+  PencilDrawing get drawing => _drawing;
 
-  void setDrawing(PencilDrawing pencilDrawing) {
-    _strokePaths = PencilDrawing(strokes: pencilDrawing.strokes);
-    _totalSize = null;
+  /// Set the initial strokes of the drawing. For example, this can be used for
+  /// automatically generated paths.
+  setDrawing(PencilDrawing pencilDrawing) {
+    _drawing = PencilDrawing(strokes: pencilDrawing.strokes);
   }
 
+  /// Set the mode how to handle points added to the path. In case the mode
+  /// is [PencilMode.write] each point will be added to the current path.
+  /// In case of [PencilMode.erase] an eraser path will be created and all
+  /// paths that cross the eraser path will be marked for ease. Once switching
+  /// back to [PencilMode.write] all paths that are marked for erase will
+  /// be removed from [_drawing].
   void setMode(PencilMode mode) {
     // Avoid unnecessary calls
     if (_mode == mode) return;
@@ -44,7 +49,7 @@ class PencilFieldController {
         break;
       case PencilMode.erase:
         _writePathsMarkedForErase =
-            List.generate(_strokePaths.strokeCount, (index) => false);
+            List.generate(_drawing.strokeCount, (index) => false);
         _atLeastOnePathMarkedForErase = false;
     }
   }
@@ -52,7 +57,8 @@ class PencilFieldController {
   /// Return the current mode
   PencilMode get mode => _mode;
 
-  /// Start a new path
+  /// Start a new path. [pencilPaint] will be used for subsequents points added
+  /// with [addPointToPath].
   void startPath({
     required Offset startOffset,
     required PencilPaint pencilPaint,
@@ -62,8 +68,7 @@ class PencilFieldController {
         bezierDistance: PencilStroke.defaultBezierDistance(),
         pencilPaint: pencilPaint);
     if (_mode == PencilMode.write) {
-      _strokePaths = _strokePaths.add(pencilPath);
-      _totalSize = null;
+      _drawing = _drawing.add(pencilPath);
     } else {
       _eraserPath = pencilPath;
     }
@@ -74,8 +79,7 @@ class PencilFieldController {
   void addPointToPath(Offset offset) {
     switch (_mode) {
       case PencilMode.write:
-        _strokePaths.addPointToLastStroke(Point(offset.dx, offset.dy));
-        _totalSize = null;
+        _drawing.addPointToLastStroke(Point(offset.dx, offset.dy));
         break;
       case PencilMode.erase:
         _eraserPath = _eraserPath?.addPoint(Point(offset.dx, offset.dy));
@@ -93,6 +97,7 @@ class PencilFieldController {
     }
   }
 
+  // Calculate all intersections between _strokePaths and _eraserPaths.
   void _calculateIntersections() {
     // Check the last line that has been added to the eraser path
     if (_eraserPath!.points.length < 2) return;
@@ -113,14 +118,14 @@ class PencilFieldController {
     }
 
     // Iterate over all writing paths
-    for (int pathIndex = 0; pathIndex < _strokePaths.strokeCount; pathIndex++) {
+    for (int pathIndex = 0; pathIndex < _drawing.strokeCount; pathIndex++) {
       // Move to the next path if the one at the index is already marked for
       // erase.
       if (_writePathsMarkedForErase[pathIndex] == true) {
         continue;
       }
 
-      final PencilStroke writePath = _strokePaths.atIndex(index: pathIndex);
+      final PencilStroke writePath = _drawing.atIndex(index: pathIndex);
       bool intersectionFound = false;
       Point wp1;
       Point wp2;
@@ -194,49 +199,53 @@ class PencilFieldController {
     }
   }
 
+  // Remove all paths that are marked for erase. All removed paths are
+  // moved to an undo buffer.
   void _removeWritePathsMarkedForErase() {
     if (_atLeastOnePathMarkedForErase) {
-      for (int reverseIndex = _strokePaths.strokeCount - 1;
+      for (int reverseIndex = _drawing.strokeCount - 1;
           reverseIndex >= 0;
           reverseIndex--) {
         if (_writePathsMarkedForErase[reverseIndex]) {
           PencilStroke deletedPath =
-              _strokePaths.removeAtIndex(index: reverseIndex);
+              _drawing.removeAtIndex(index: reverseIndex);
           _undoPaths = _undoPaths.add(deletedPath);
         }
       }
       _writePathsMarkedForErase = List.generate(
-        _strokePaths.strokeCount,
+        _drawing.strokeCount,
         (index) => false,
       );
       _atLeastOnePathMarkedForErase = false;
-
-      _totalSize = null;
     }
     _eraserPath = null;
   }
 
+  /// Undo an delete operation and restore that paths that has been removed
+  /// last. This operation can be repeated until no more paths to restore
+  /// are available.
   void undo() {
     if (_undoPaths.strokeCount == 0) return;
 
-    _strokePaths = _strokePaths.add(_undoPaths.lastStroke);
-    _totalSize = null;
+    _drawing = _drawing.add(_undoPaths.lastStroke);
     _undoPaths.removeLast();
   }
 
+  /// Clears the everything and sets the operating mode to [PencilMode.write].
   void clear() {
     _mode = PencilMode.write;
-    _strokePaths = const PencilDrawing(strokes: <PencilStroke>[]);
-    _totalSize = null;
+    _drawing = const PencilDrawing(strokes: <PencilStroke>[]);
     _eraserPath = null;
   }
 
-  /// Draw all paths on a canvas
+  /// Draw all paths on a canvas. This functions is called if an image
+  /// of the managed paths is generated or the customer painter of
+  /// [PencilField] is called.
   void draw(Canvas canvas, Size size) {
     Paint paint;
     PencilStroke pencilPath;
-    for (int index = 0; index < _strokePaths.strokeCount; index++) {
-      pencilPath = _strokePaths.atIndex(index: index);
+    for (int index = 0; index < _drawing.strokeCount; index++) {
+      pencilPath = _drawing.atIndex(index: index);
       paint = pencilPath.pencilPaint.paint;
 
       // If erase mode is active all paints for paths that are marked for
@@ -261,18 +270,6 @@ class PencilFieldController {
     }
   }
 
-  Size calculateTotalSize() {
-    if (_totalSize != null) return _totalSize!;
-
-    Size drawingSize = const Size(0, 0);
-    for (final stroke in _strokePaths.strokes) {
-      final strokeSize = stroke.calculateTotalSize();
-      drawingSize = Size(max(drawingSize.width, strokeSize.width),
-          max(drawingSize.height, strokeSize.height));
-    }
-    return drawingSize;
-  }
-
   /// Get the drawing as an image. The function requires at least an background
   /// color. If the background pattern shall be added the optional parameter
   /// [decoration] can be used. In this case [backgroundColor] will be ignored
@@ -295,7 +292,7 @@ class PencilFieldController {
 
     final PictureRecorder recorder = PictureRecorder();
     final Canvas canvas = Canvas(recorder);
-    final Size size = calculateTotalSize();
+    final Size size = _drawing.calculateTotalSize();
 
     // Paint the background first
     final backgroundPaint = Paint();
@@ -322,10 +319,13 @@ class PencilImage {
 
   const PencilImage(this.picture, this.size);
 
+  /// Return the drawing as an [Image]
   Future<Image> toImage() {
     return picture.toImage(size.width.toInt(), size.height.toInt());
   }
 
+  /// Return the image as PNG. This is useful to store the image as a file or
+  /// send it to a service that decodes the handwriting and returns the text.
   Future<Uint8List?> toPNG() async {
     final Image image = await toImage();
     final byteImage = await image.toByteData(format: ImageByteFormat.png);
