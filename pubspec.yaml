@@ -1,7 +1,7 @@
 name: pencil_field
 description: Pencil Input
 version: 0.0.1
-homepage:
+homepage: https://github.com/ManfredM/pencil_field
 
 environment:
   sdk: ">=2.17.6 <3.0.0"
