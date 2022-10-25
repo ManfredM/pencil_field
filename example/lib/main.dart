@@ -53,7 +53,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final pencilController = PencilFieldController();
-  PencilDrawing _pencilDrawing = const PencilDrawing(strokes: []);
   double scale = 1;
 
   @override
@@ -80,17 +79,15 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _drawingChanged(PencilDrawing pencilDrawing) {
-    setState(() {
-      _pencilDrawing = pencilDrawing.scale(scale: scale);
-    });
+  void _drawingChanged(PencilDrawing _) {
+    setState(() {});
   }
 }
 
 class _PencilDisplay extends StatefulWidget {
   final PencilFieldController controller;
 
-  const _PencilDisplay({super.key, required this.controller});
+  const _PencilDisplay({required this.controller});
 
   @override
   State<_PencilDisplay> createState() => _PencilDisplayState();

@@ -14,3 +14,8 @@
 
 * Added more documentation to all functions
 * Removed some duplicate functions
+
+## 0.1.1
+
+* Added automated testing to github repository
+* Minor changes in example

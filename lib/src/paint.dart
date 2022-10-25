@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-
 /// [PencilPaint] is derived from [Paint] and adds a few [PencilField]
 /// specific capabilities like persistence to that class.
 class PencilPaint extends Equatable {
@@ -18,8 +17,9 @@ class PencilPaint extends Equatable {
   /// Create a copy with modifications.
   PencilPaint copyWith([Color? color, double? strokeWidth]) {
     return PencilPaint(
-        color: color ?? paint.color,
-        strokeWidth: strokeWidth ?? paint.strokeWidth);
+      color: color ?? paint.color,
+      strokeWidth: strokeWidth ?? paint.strokeWidth,
+    );
   }
 
   /// Create a json representation of the object
@@ -33,8 +33,9 @@ class PencilPaint extends Equatable {
   /// Restore the object from a json data map.
   factory PencilPaint.fromJson(Map<String, dynamic> json) {
     return PencilPaint(
-        color: Color(int.parse(json['color'])),
-        strokeWidth: json['strokeWidth']);
+      color: Color(int.parse(json['color'])),
+      strokeWidth: json['strokeWidth'],
+    );
   }
 
   @override
