@@ -1,13 +1,13 @@
 <h1 align="center">FLUTTER PENCIL FIELD</h1>
 
-# pencil_field 0.0.2
+# pencil_field
 Widget for pencil / stylus input on different devices and platforms. This widget is intended
 for any freehand input like signatures or drawings. The widget also supports full persistence
 of the input. It can either be accessed as JSON (to keep it editable) or as image (e.g., for
 archiving or immutability reasons).
 
 <p align="center">
-    <img src="https://github.com/ManfredM/pencil_field/blob/master/images/pencil_field_demo.png" alt="example" width="400"/>
+    <img src="https://raw.githubusercontent.com/ManfredM/pencil_field/master/images/pencil_field_demo.png" alt="example" width="400"/>
 </p>
 <br>
 
