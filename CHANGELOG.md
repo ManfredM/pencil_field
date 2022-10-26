@@ -19,3 +19,7 @@
 
 * Added automated testing to github repository
 * Minor changes in example
+
+## 0.1.2
+
+* Restrict package to iOS, Android and Web
