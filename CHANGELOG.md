@@ -23,3 +23,7 @@
 ## 0.1.2
 
 * Restrict package to iOS, Android and Web
+
+## 0.2.0
+
+* Added callback for onTap gesture to PencilDisplay
