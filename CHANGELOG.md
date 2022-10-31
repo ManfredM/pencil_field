@@ -34,3 +34,6 @@
   chequered or dotted pattern
 * **DOCUMENTATION** Improved example
 
+## 0.2.1
+
+* **BUGFIX** Changed signature of custom painter function in PencilDecoration

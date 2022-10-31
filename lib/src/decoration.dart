@@ -4,21 +4,21 @@ enum PencilDecorationType { blank, lines, chequered, dots, custom }
 
 /// A custom painter in case a special pattern is needed.
 typedef PencilDecorationCustomPainter = void Function({
+// Canvas and size like for every paint function
+  required Canvas canvas,
+  required Size size,
+
 // decoration object
-  PencilDecoration decoration,
+  required PencilDecoration decoration,
 
 // The paint based on the decoration
-  Paint paint,
+  required Paint paint,
 
 // Pre-calculated coordinates reflecting the potentially defined padding
-  double xStart,
-  double yStart,
-  double width,
-  double height,
-
-// Canvas and size like for every paint function
-  Canvas canvas,
-  Size size,
+  required double xStart,
+  required double yStart,
+  required double width,
+  required double height,
 });
 
 class PencilDecoration {
@@ -120,14 +120,14 @@ class PencilDecoration {
     // If a customer painter is defined it is called and the functions returns.
     if (type == PencilDecorationType.custom) {
       customPainter?.call(
+        canvas: canvas,
+        size: size,
         decoration: this,
         paint: paint,
         xStart: xStart,
         yStart: yStart,
         width: patternWidth,
         height: patternHeight,
-        canvas: canvas,
-        size: size,
       );
       return;
     }
@@ -194,7 +194,7 @@ class PencilDecoration {
         paint,
       );
       canvas.drawLine(
-        Offset(xStart , yStart+ patternHeight),
+        Offset(xStart, yStart + patternHeight),
         Offset(xStart + patternWidth, yStart + patternHeight),
         paint,
       );
