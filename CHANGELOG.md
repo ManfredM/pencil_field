@@ -24,7 +24,7 @@
 
 * **DEPLOYMENT** Restrict package to iOS, Android and Web
 
-## 0.1.3
+## 0.2.0
 
 * **BUGFIX** Using PencilDecoration with padding led to wrong decoration pattern
 
