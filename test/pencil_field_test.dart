@@ -10,11 +10,13 @@ import 'package:pencil_field/pencil_field.dart';
 import 'pencil_field_test_data.dart';
 
 class _BackgroundPatternTest {
+  final String name;
   final PencilDecoration decoration;
   final String createdImagePath;
   final String expectedImagePath;
 
   _BackgroundPatternTest({
+    required this.name,
     required this.decoration,
     required this.createdImagePath,
     required this.expectedImagePath,
@@ -214,6 +216,7 @@ void main() {
         (tester) async {
       final widgetTests = [
         _BackgroundPatternTest(
+          name: 'lines',
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
             type: PencilDecorationType.lines,
@@ -224,23 +227,25 @@ void main() {
           expectedImagePath: 'test/expected_lines_image.png',
         ),
         _BackgroundPatternTest(
+          name: 'chequered',
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
             type: PencilDecorationType.chequered,
             lineWidth: 2,
             numberOfLines: 5,
           ),
-          createdImagePath: 'test/image_output/created_chequered_image.png',
+          createdImagePath: 'test/image_output/expected_chequered_image.png',
           expectedImagePath: 'test/expected_chequered_image.png',
         ),
         _BackgroundPatternTest(
+          name: 'dots',
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
             type: PencilDecorationType.dots,
             lineWidth: 2,
             numberOfLines: 5,
           ),
-          createdImagePath: 'test/image_output/created_dots_image.png',
+          createdImagePath: 'test/image_output/expected_dots_image.png',
           expectedImagePath: 'test/expected_dots_image.png',
         )
       ];
@@ -248,6 +253,7 @@ void main() {
       final controller = PencilFieldController();
 
       for (final widgetTest in widgetTests) {
+        debugPrint('running test for ${widgetTest.name}');
         await tester.pumpWidget(
           createWidgetForTesting(
             child: PencilField(

@@ -152,7 +152,7 @@ class PencilDecoration {
 
     // Draw vertical lines.
     if (type == PencilDecorationType.chequered) {
-      for (int iX = 0; iX < patternWidth / xSpacing; iX++) {
+      for (int iX = 0; iX <= patternWidth / xSpacing; iX++) {
         canvas.drawLine(
           Offset(xStart + xSpacing * iX, padding.top),
           Offset(xStart + xSpacing * iX, padding.top + patternHeight),
@@ -164,7 +164,7 @@ class PencilDecoration {
     // Draw horizontal lines
     if (type == PencilDecorationType.lines ||
         type == PencilDecorationType.chequered) {
-      for (int iY = 0; iY < patternHeight / ySpacing; iY++) {
+      for (int iY = 0; iY <= patternHeight / ySpacing; iY++) {
         canvas.drawLine(
           Offset(xStart, yStart + ySpacing * iY),
           Offset(xStart + patternWidth, yStart + ySpacing * iY),
@@ -175,8 +175,8 @@ class PencilDecoration {
 
     // Draw the dotted pattern
     if (type == PencilDecorationType.dots) {
-      for (int iX = 0; iX < patternWidth / xSpacing; iX++) {
-        for (int iY = 0; iY < patternHeight / ySpacing + 1; iY++) {
+      for (int iX = 0; iX <= patternWidth / xSpacing; iX++) {
+        for (int iY = 0; iY <= patternHeight / ySpacing; iY++) {
           canvas.drawCircle(
             Offset(xStart + xSpacing * iX, yStart + ySpacing * iY),
             lineWidth / 2,
