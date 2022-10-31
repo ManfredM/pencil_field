@@ -129,7 +129,6 @@ class _PencilDisplayState extends State<_PencilDisplay> {
                 scale: scale,
               ),
               decoration: PencilDecoration(backgroundColor: Colors.white),
-              onTap: () => debugPrint('PencilDisplay --> onTap'),
             ),
           ),
         ],

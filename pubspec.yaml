@@ -1,8 +1,7 @@
 name: pencil_field
-description: Widget for pencil / stylus input on different devices and platforms. It is intended
-  for any freehand input like signatures or drawings and supports full persistence
-  of the input.
-version: 0.2.0
+description: Pencil / stylus interaction (writing & erasing) on different devices and platforms.
+  Comes with versioned persistence of input.
+version: 0.1.3
 homepage: https://github.com/ManfredM/pencil_field
 
 environment:

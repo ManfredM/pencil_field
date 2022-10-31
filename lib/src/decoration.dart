@@ -41,8 +41,8 @@ class PencilDecoration {
     final double ySpacing =
         numberOfLines == 1 ? patternHeight : patternHeight / numberOfLines;
     final double xSpacing = ySpacing;
-    final double xStart = padding.top;
-    final double yStart = padding.left;
+    final double xStart = padding.left;
+    final double yStart = padding.top;
 
     // there might be padding setting and layout constraints that lead negative
     // heights or width. In this case nothing is painted

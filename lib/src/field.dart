@@ -98,13 +98,11 @@ class _PencilFieldState extends State<PencilField> {
 class PencilDisplay extends StatelessWidget {
   final PencilDrawing pencilDrawing;
   final PencilDecoration? decoration;
-  final VoidCallback? onTap;
 
   const PencilDisplay({
     super.key,
     required this.pencilDrawing,
     this.decoration,
-    this.onTap,
   });
 
   @override
@@ -113,13 +111,10 @@ class PencilDisplay extends StatelessWidget {
     pencilInteractionController.setDrawing(pencilDrawing);
 
     return ClipRect(
-      child: GestureDetector(
-        onTap: onTap,
-        child: CustomPaint(
-          painter: _PencilFieldPainter(
-            pencilInteractionController,
-            decoration ?? PencilDecoration(),
-          ),
+      child: CustomPaint(
+        painter: _PencilFieldPainter(
+          pencilInteractionController,
+          decoration ?? PencilDecoration(),
         ),
       ),
     );
