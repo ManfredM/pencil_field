@@ -28,9 +28,13 @@ class PencilFieldController {
 
   PencilDrawing get drawing => _strokePaths;
 
+  /// Set the initial strokes of the drawing. For example, this can be used for
+  /// automatically generated paths. This sets the mode to writing.
   void setDrawing(PencilDrawing pencilDrawing) {
     _strokePaths = PencilDrawing(strokes: pencilDrawing.strokes);
     _totalSize = null;
+    _mode = PencilMode.write;
+    _atLeastOnePathMarkedForErase = false;
   }
 
   void setMode(PencilMode mode) {
@@ -315,17 +319,20 @@ class PencilFieldController {
   }
 }
 
-/// Return the drawing as an image in different formats
+/// Return the drawing as an image in different format
 class PencilImage {
   final Picture picture;
   final Size size;
 
   const PencilImage(this.picture, this.size);
 
+  /// Return the drawing as an [Image]
   Future<Image> toImage() {
     return picture.toImage(size.width.toInt(), size.height.toInt());
   }
 
+  /// Return the image as PNG. This is useful to store the image as a file or
+  /// send it to a service that decodes the handwriting and returns the text.
   Future<Uint8List?> toPNG() async {
     final Image image = await toImage();
     final byteImage = await image.toByteData(format: ImageByteFormat.png);
