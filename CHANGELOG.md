@@ -27,7 +27,8 @@
 ## 0.2.0
 
 * **BUGFIX** Using PencilDecoration with padding led to wrong decoration pattern
-* **BUGFIX** using PencilController setDrawing could lead to an exception when called in write mode
+* **BUGFIX** Using PencilController setDrawing could lead to an exception when called in write mode
+* **BUGFIX** Fixed images for comparison of drawing routines
 * **IMPROVEMENT** PencilDecorator can have custom callback to draw background
 * **BREAKING** PencilDecorator now accepts either number of lines or a fixed spacing to draw ruled,
   chequered or dotted pattern
