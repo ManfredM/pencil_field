@@ -234,7 +234,7 @@ void main() {
             lineWidth: 2,
             numberOfLines: 5,
           ),
-          createdImagePath: 'test/image_output/expected_chequered_image.png',
+          createdImagePath: 'test/image_output/created_chequered_image.png',
           expectedImagePath: 'test/expected_chequered_image.png',
         ),
         _BackgroundPatternTest(
@@ -245,7 +245,7 @@ void main() {
             lineWidth: 2,
             numberOfLines: 5,
           ),
-          createdImagePath: 'test/image_output/expected_dots_image.png',
+          createdImagePath: 'test/image_output/created_dots_image.png',
           expectedImagePath: 'test/expected_dots_image.png',
         )
       ];
