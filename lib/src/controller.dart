@@ -6,7 +6,6 @@ import 'dart:ui';
 import 'package:flutter/rendering.dart';
 import 'package:pencil_field/pencil_field.dart';
 
-
 /// The pencil can work in two different modes, either draw something or erase
 enum PencilMode { write, erase }
 
