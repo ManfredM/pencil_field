@@ -30,10 +30,13 @@
 * **BUGFIX** Using PencilController setDrawing could lead to an exception when called in write mode
 * **BUGFIX** Fixed images for comparison of drawing routines
 * **IMPROVEMENT** PencilDecorator can have custom callback to draw background
-* **BREAKING** PencilDecorator now accepts either number of lines or a fixed spacing to draw ruled,
-  chequered or dotted pattern
+* **BREAKING** PencilDecorator now accepts either number of lines or a fixed spacing to draw ruled, chequered or dotted pattern
 * **DOCUMENTATION** Improved example
 
 ## 0.2.1
 
 * **BUGFIX** Changed signature of custom painter function in PencilDecoration
+
+## 0.2.2
+
+* **BUGFIX** Fixed bug in undo method when controller is in erase mode

@@ -93,15 +93,12 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
     });
   }
 
-  /*void _onModeSelected(PencilMode newMode) {
-    setState(() {
-      widget.controller.setMode(PencilMode.erase);
-      pencilPaint = eraserPaint;
-    });
-  }*/
-
   void _onPrintJSON() {
-    log(widget.controller.drawing.toJson().toString());
+    setState(() {
+      widget.controller.undo();
+    });
+
+    //log(widget.controller.drawing.toJson().toString());
   }
 }
 

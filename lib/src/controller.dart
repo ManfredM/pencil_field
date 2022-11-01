@@ -223,9 +223,13 @@ class PencilFieldController {
   void undo() {
     if (_undoPaths.strokeCount == 0) return;
 
+    // Move the last deleted stroke back to the list of strokes
     _strokePaths = _strokePaths.add(_undoPaths.lastStroke);
     _totalSize = null;
     _undoPaths.removeLast();
+
+    // Add an additional entry to the list of markers.
+    _writePathsMarkedForErase.add(false);
   }
 
   void clear() {
