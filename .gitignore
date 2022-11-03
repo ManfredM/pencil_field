@@ -30,6 +30,7 @@ migrate_working_dir/
 build/
 coverage/
 test/image_output
+test/resulting_output
 example.md
 
 

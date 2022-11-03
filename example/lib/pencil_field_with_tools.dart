@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:pencil_field/pencil_field.dart';
@@ -66,6 +65,13 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
                   spacing: 20,
                   lineWidth: 1,
                   padding: const EdgeInsets.all(10),
+                  paintProvider: (column, row, paint) {
+                    if (row == 10 || column == 10) {
+                      paint.color = Colors.red;
+                      return paint;
+                    }
+                    return paint;
+                  },
                 ),
                 pencilOnly: false,
               ),

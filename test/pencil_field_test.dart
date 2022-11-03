@@ -71,16 +71,6 @@ void main() {
   const givenDrawingSize = Size(40, 20);
 
   group('Testing persistence', () {
-    test('Tests json encoding and decoding of PencilPaint', () {
-      PencilPaint givenPencilPaint =
-          PencilPaint(color: Colors.black, strokeWidth: 1);
-
-      final encodedPencilPaint = givenPencilPaint.toJson();
-      final decodedPencilPaint = PencilPaint.fromJson(encodedPencilPaint);
-
-      expect(givenPencilPaint, decodedPencilPaint);
-    });
-
     test('Test json encoding and decoding of PencilStroke', () {
       final encodedStrokeAsJson = givenPencilStroke1.toJson();
       final decodedStroke = PencilStroke.fromJson(encodedStrokeAsJson);
@@ -131,8 +121,7 @@ void main() {
       expect(scaledDrawing.calculateTotalSize(), expectedSize);
     });
 
-    test('Test all interactions that PencilInteractionsController implements. ',
-        () {
+    test('Test all interactions that PencilFieldController implements. ', () {
       final controller = PencilFieldController();
       final writePaint = PencilPaint(color: Colors.black, strokeWidth: 2.0);
       //final eraserPaint = PencilPaint(color: Colors.white60, strokeWidth: 2.0);
@@ -219,8 +208,8 @@ void main() {
           name: 'lines',
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
-            type: PencilDecorationType.lines,
-            lineWidth: 2,
+            type: PencilDecorationType.ruled,
+            strokeWidth: 2,
             numberOfLines: 5,
           ),
           createdImagePath: 'test/image_output/created_lines_image.png',
@@ -231,7 +220,7 @@ void main() {
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
             type: PencilDecorationType.chequered,
-            lineWidth: 2,
+            strokeWidth: 2,
             numberOfLines: 5,
           ),
           createdImagePath: 'test/image_output/created_chequered_image.png',
@@ -242,7 +231,7 @@ void main() {
           decoration: PencilDecoration(
             backgroundColor: Colors.white,
             type: PencilDecorationType.dots,
-            lineWidth: 2,
+            strokeWidth: 2,
             numberOfLines: 5,
           ),
           createdImagePath: 'test/image_output/created_dots_image.png',

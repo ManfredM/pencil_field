@@ -1,24 +1,41 @@
 import 'dart:math';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:pencil_field/src/paint.dart';
 
 import 'stroke.dart';
 
+/// This value controls the minimum distance required between points that a
+/// point is added using [addPointToLastStroke].
+const _kMinimumDistance = 0.5;
+
 /// Store a list of paths that belong together
-class PencilDrawing extends Equatable {
-  final List<PencilStroke> _strokes;
+class PencilDrawing {
+  PencilDrawing({List<PencilStroke>? strokes}) {
+    if (strokes != null) {
+      _strokes.addAll(strokes);
+    }
+  }
 
-  const PencilDrawing({required List<PencilStroke> strokes})
-      : _strokes = strokes;
+  PencilDrawing.from({required PencilDrawing pencilDrawing}) {
+    _strokes.addAll(pencilDrawing._strokes);
+  }
 
-  PencilDrawing.from({required PencilDrawing pencilDrawing})
-      : _strokes = pencilDrawing.strokes;
+  final List<PencilStroke> _strokes = [];
 
+  /// Returns the number of strokes in the drawing
   int get strokeCount => _strokes.length;
 
-  // This property will cause an exception if not strokes are the list
+  /// Adds a new stroke to drawing and returns the number of strokes in
+  /// drawing.
+  int addStroke({
+    required PencilStroke stroke,
+  }) {
+    _strokes.add(stroke);
+    return _strokes.length;
+  }
+
+  /// Returns the last stroke in the drawing. Using the property without any
+  /// stroke in the drawing will cause an exception.
   PencilStroke get lastStroke {
     assert(() {
       if (_strokes.isEmpty) {
@@ -31,35 +48,22 @@ class PencilDrawing extends Equatable {
     return _strokes.last;
   }
 
-  List<PencilStroke> get strokes => _strokes;
+  /// returns a [PencilStroke] at a given index. An exception will be thrown if
+  /// [index] is out of range.
+  ///
+  /// v0.4.0. renamed from atIndex.
+  PencilStroke strokeAt(int index) => _strokes[index];
 
-  PencilStroke atIndex({required int index}) => _strokes[index];
-
-  PencilStroke removeAtIndex({required int index}) {
+  /// Removes a stroke at given [index]. An exception will be thrown if
+  /// [index] is out of range.
+  PencilStroke removeStrokeAt(int index) {
     return _strokes.removeAt(index);
   }
 
-  PencilDrawing add(PencilStroke stroke) {
-    return PencilDrawing(strokes: [..._strokes, stroke]);
-  }
-
-  void addPointToLastStroke(Point point) {
-    bool addPoint = true;
-    if (_strokes.last.points.isNotEmpty) {
-      final Point previousPoint = _strokes.last.points.last;
-      final num distance = sqrt(
-          ((point.x - previousPoint.x) * (point.x - previousPoint.x)) +
-              ((point.y - previousPoint.y) * (point.y - previousPoint.y)));
-      const epsilon = 0.5;
-      if (distance < epsilon) addPoint = false;
-    }
-    if (addPoint) {
-      _strokes.last = _strokes.last.addPoint(point);
-    }
-  }
-
-  void removeLast() {
-    _strokes.removeAt(strokeCount - 1);
+  /// Removes the last stroke that has been added to the drawing.
+  void removeLastStroke() {
+    if (strokeCount == 0) return;
+    removeStrokeAt(strokeCount - 1);
   }
 
   Size calculateTotalSize() {
@@ -78,29 +82,31 @@ class PencilDrawing extends Equatable {
 
     // Outer loop: iterate over all strokes in the drawing
     for (final pencilStroke in _strokes) {
-      final List<Point> scaledPoints = <Point>[];
-
-      // inner loop: scale all points on a stroke
-      for (final point in pencilStroke.points) {
-        scaledPoints.add(Point(point.x * scale, point.y * scale));
-      }
-
-      // scale the strokeWidth and keep all other paint parameters
-      final scaledPencilPaint = PencilPaint(
-          color: pencilStroke.pencilPaint.paint.color,
-          strokeWidth: pencilStroke.pencilPaint.paint.strokeWidth * scale);
-
-      // create scales stroke and add it to the list of stokes in a drawing
-      final scaledPencilStroke = PencilStroke(
-          points: scaledPoints,
-          bezierDistance: pencilStroke.bezierDistance,
-          pencilPaint: scaledPencilPaint);
-      scaledPencilStrokes.add(scaledPencilStroke);
+      scaledPencilStrokes.add(pencilStroke.scale(scale: scale));
     }
 
     return PencilDrawing(strokes: scaledPencilStrokes);
   }
 
+  /// Adds a point to the last stroke in the drawing. It will only add a point
+  /// if the distance between the last point and the new point in more than
+  /// [kMinimumDistance] apart from last point in last stroke.
+  void addPointToLastStroke(Point point) {
+    bool addPoint = true;
+    if (_strokes.last.pointCount > 0) {
+      final Point previousPoint = _strokes.last.last;
+      final num distance = sqrt(
+          ((point.x - previousPoint.x) * (point.x - previousPoint.x)) +
+              ((point.y - previousPoint.y) * (point.y - previousPoint.y)));
+      const epsilon = _kMinimumDistance;
+      if (distance < epsilon) addPoint = false;
+    }
+    if (addPoint) {
+      _strokes.last.addPoint(point);
+    }
+  }
+
+  /// Store the drawing in a versioned jsan map.
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'version': 1,
@@ -108,35 +114,35 @@ class PencilDrawing extends Equatable {
     };
   }
 
+  /// Restore a drawing from json data. In case versions have changed this
+  /// function will take care of the versioning. It will return an empty
+  /// drawing in case the version is not supported.
   factory PencilDrawing.fromJson(Map<String, dynamic> json) {
     assert(() {
       if (json['version'] == null) {
         debugPrint(
-          'No version information provided. The root cause could be'
+          'WARNING: No version information provided. The root cause could be'
           'that you are providing a json that was not created by pencil_field '
           'or the json is corrupted.',
         );
-        return false;
+        return true;
       }
       if (json['version'] != 1) {
         debugPrint(
-          'The version of your json is not supported.',
+          'WARNING: Only version 1 is supported.',
         );
-        return false;
+        return true;
       }
       return true;
     }());
 
     // Make sure there is no crash in production
-    if (json['version'] == null) return const PencilDrawing(strokes: []);
-    if (json['version'] != 1) return const PencilDrawing(strokes: []);
+    if (json['version'] == null) return PencilDrawing(strokes: []);
+    if (json['version'] != 1) return PencilDrawing(strokes: []);
 
     // Decode the strokes
     final pencilStrokes = List<PencilStroke>.from(
         json['strokes'].map((j) => PencilStroke.fromJson(j)));
     return PencilDrawing(strokes: pencilStrokes);
   }
-
-  @override
-  List<Object> get props => [_strokes];
 }

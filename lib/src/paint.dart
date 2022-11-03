@@ -1,7 +1,6 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-class PencilPaint extends Equatable {
+class PencilPaint {
   final Paint paint = Paint();
 
   PencilPaint({required Color color, required double strokeWidth}) {
@@ -12,7 +11,7 @@ class PencilPaint extends Equatable {
     paint.isAntiAlias = true;
   }
 
-  PencilPaint copyWith([Color? color, double? strokeWidth]) {
+  PencilPaint copyWith({Color? color, double? strokeWidth}) {
     return PencilPaint(
         color: color ?? paint.color,
         strokeWidth: strokeWidth ?? paint.strokeWidth);
@@ -30,7 +29,4 @@ class PencilPaint extends Equatable {
         color: Color(int.parse(json['color'])),
         strokeWidth: json['strokeWidth']);
   }
-
-  @override
-  List<Object> get props => [paint.strokeWidth, paint.color];
 }

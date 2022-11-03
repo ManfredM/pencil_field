@@ -40,3 +40,12 @@
 ## 0.2.2
 
 * **BUGFIX** Fixed bug in undo method when controller is in erase mode
+
+## 0.3.0
+
+* **IMPROVEMENT** A callback to provide the paint to be used for background pattern added to PencilDecoration
+
+## 0.4.0
+
+* **BREAKING** Removed equatable dependency
+* **BREAKING** Renamed methods dealing with strokes of class PencilDrawing for better clarity.

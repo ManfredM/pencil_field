@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
 
-enum PencilDecorationType { blank, lines, chequered, dots, custom }
+enum PencilDecorationType { blank, ruled, chequered, dots, custom }
+
+/// A custom provider for the paint to be used. The returned paint will be used
+/// to draw the next element. In case null is returned the element is not
+/// painted.
+typedef PencilDecorationPaintProvider = Paint? Function(
+// Index of the row/column that will be painted next starting with 0. If
+// vertical lines are painted row will be -1, in case of horizontal lines
+// column will be -1. In case the frame is painted both values will be -1.
+  int row,
+  int column,
+
+// The paint that would be used to paint the element
+  Paint paint,
+);
 
 /// A custom painter in case a special pattern is needed.
 typedef PencilDecorationCustomPainter = void Function({
@@ -26,11 +40,12 @@ class PencilDecoration {
   final EdgeInsets padding;
   final Color backgroundColor;
   final Color patternColor;
-  final double lineWidth;
+  final double strokeWidth;
   final bool hasFrame;
-  final double? numberOfLines;
+  final int? numberOfLines;
   final double? spacing;
 
+  final PencilDecorationPaintProvider? paintProvider;
   final PencilDecorationCustomPainter? customPainter;
 
   PencilDecoration({
@@ -38,14 +53,15 @@ class PencilDecoration {
     this.padding = const EdgeInsets.all(0),
     this.backgroundColor = Colors.transparent,
     this.patternColor = Colors.black54,
-    this.lineWidth = 1.0,
+    this.strokeWidth = 1.0,
     this.hasFrame = false,
     this.numberOfLines,
     this.spacing,
+    this.paintProvider,
     this.customPainter,
   }) {
     assert(() {
-      if (type == PencilDecorationType.lines ||
+      if (type == PencilDecorationType.ruled ||
           type == PencilDecorationType.chequered ||
           type == PencilDecorationType.dots) {
         if (numberOfLines == null && spacing == null) {
@@ -84,6 +100,13 @@ class PencilDecoration {
         return false;
       }
 
+      if (paintProvider != null && customPainter != null) {
+        debugPrint(
+          'Either a paintProvider or a customPainter can be provided.',
+        );
+        return false;
+      }
+
       return true;
     }());
   }
@@ -94,9 +117,12 @@ class PencilDecoration {
     if (type == PencilDecorationType.blank) return;
 
     // All predefined pattern go here
-    final paint = Paint()
+    /*final paint = Paint()
       ..color = patternColor
-      ..strokeWidth = lineWidth;
+      ..strokeWidth = lineWidth;*/
+    /*final paint = Paint()
+      ..color = Colors.deepOrange
+      ..strokeWidth = lineWidth;*/
 
     // Width and height of the pattern
     final patternHeight = size.height - padding.top - padding.bottom;
@@ -123,7 +149,9 @@ class PencilDecoration {
         canvas: canvas,
         size: size,
         decoration: this,
-        paint: paint,
+        paint: Paint()
+          ..color = patternColor
+          ..strokeWidth = strokeWidth,
         xStart: xStart,
         yStart: yStart,
         width: patternWidth,
@@ -132,10 +160,18 @@ class PencilDecoration {
       return;
     }
 
+    // Draw the background
+    final backgroundPaint = Paint();
+    backgroundPaint.color = backgroundColor;
+    canvas.drawRect(
+      Rect.fromLTWH(0.0, 0.0, size.width, size.height),
+      backgroundPaint,
+    );
+
     // ySpacing will be calculated either based on number of lines or the
     // spacing given.
     late double ySpacing;
-    if (type == PencilDecorationType.lines ||
+    if (type == PencilDecorationType.ruled ||
         type == PencilDecorationType.chequered ||
         type == PencilDecorationType.dots) {
       if (numberOfLines != null) {
@@ -152,35 +188,60 @@ class PencilDecoration {
 
     // Draw vertical lines.
     if (type == PencilDecorationType.chequered) {
-      for (int iX = 0; iX <= patternWidth / xSpacing; iX++) {
+      for (int column = 0; column <= patternWidth / xSpacing; column++) {
+        Paint? linePaint = Paint()
+          ..color = patternColor
+          ..strokeWidth = strokeWidth;
+        //..blendMode = BlendMode.srcOver;
+        if (paintProvider != null) {
+          linePaint = paintProvider?.call(column, -1, linePaint);
+        }
+        if (linePaint == null) continue;
+
         canvas.drawLine(
-          Offset(xStart + xSpacing * iX, padding.top),
-          Offset(xStart + xSpacing * iX, padding.top + patternHeight),
-          paint,
+          Offset(xStart + xSpacing * column, padding.top),
+          Offset(xStart + xSpacing * column, padding.top + patternHeight),
+          linePaint,
         );
       }
     }
 
     // Draw horizontal lines
-    if (type == PencilDecorationType.lines ||
+    if (type == PencilDecorationType.ruled ||
         type == PencilDecorationType.chequered) {
-      for (int iY = 0; iY <= patternHeight / ySpacing; iY++) {
+      for (int row = 0; row <= patternHeight / ySpacing; row++) {
+        Paint? linePaint = Paint()
+          ..color = patternColor
+          ..strokeWidth = strokeWidth;
+        if (paintProvider != null) {
+          linePaint = paintProvider?.call(-1, row, linePaint);
+        }
+        if (linePaint == null) continue;
+
         canvas.drawLine(
-          Offset(xStart, yStart + ySpacing * iY),
-          Offset(xStart + patternWidth, yStart + ySpacing * iY),
-          paint,
+          Offset(xStart, yStart + ySpacing * row),
+          Offset(xStart + patternWidth, yStart + ySpacing * row),
+          linePaint,
         );
       }
     }
 
     // Draw the dotted pattern
     if (type == PencilDecorationType.dots) {
-      for (int iX = 0; iX <= patternWidth / xSpacing; iX++) {
-        for (int iY = 0; iY <= patternHeight / ySpacing; iY++) {
+      for (int column = 0; column <= patternWidth / xSpacing; column++) {
+        for (int row = 0; row <= patternHeight / ySpacing; row++) {
+          Paint? linePaint = Paint()
+            ..color = patternColor
+            ..strokeWidth = strokeWidth;
+          if (paintProvider != null) {
+            linePaint = paintProvider?.call(column, row, linePaint);
+          }
+          if (linePaint == null) continue;
+
           canvas.drawCircle(
-            Offset(xStart + xSpacing * iX, yStart + ySpacing * iY),
-            lineWidth / 2,
-            paint,
+            Offset(xStart + xSpacing * column, yStart + ySpacing * row),
+            strokeWidth / 2,
+            linePaint,
           );
         }
       }
@@ -188,16 +249,25 @@ class PencilDecoration {
 
     // Finally draw the frame
     if (hasFrame) {
-      canvas.drawLine(
-        Offset(xStart + patternWidth, yStart),
-        Offset(xStart + patternWidth, yStart + patternHeight),
-        paint,
-      );
-      canvas.drawLine(
-        Offset(xStart, yStart + patternHeight),
-        Offset(xStart + patternWidth, yStart + patternHeight),
-        paint,
-      );
+      Paint? linePaint = Paint()
+        ..color = patternColor
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke;
+      if (paintProvider != null) {
+        linePaint = paintProvider?.call(-1, -1, linePaint);
+      }
+
+      if (linePaint != null) {
+        canvas.drawRect(
+          Rect.fromLTWH(
+            xStart + linePaint.strokeWidth / 2,
+            yStart + linePaint.strokeWidth / 2,
+            patternWidth - linePaint.strokeWidth,
+            patternHeight - linePaint.strokeWidth,
+          ),
+          linePaint,
+        );
+      }
     }
   }
 }

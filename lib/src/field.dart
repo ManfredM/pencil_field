@@ -129,14 +129,6 @@ class _PencilFieldPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw the background
-    final backgroundPaint = Paint();
-    backgroundPaint.color = decoration.backgroundColor;
-    canvas.drawRect(
-      Rect.fromLTWH(0.0, 0.0, size.width, size.height),
-      backgroundPaint,
-    );
-
     decoration.paint(canvas, size);
 
     // Paint the handwriting
