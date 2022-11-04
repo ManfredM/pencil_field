@@ -135,7 +135,7 @@ void main() {
         givenPaint: givenPaint,
         givenScaleFactor: 0.5,
         expectedNumberOfPoints:
-        givenPencilStroke1PointCount + givenPencilStroke2PointCount,
+            givenPencilStroke1PointCount + givenPencilStroke2PointCount,
         expectedSize: Size(
           givenDrawingSize.width * 0.5,
           givenDrawingSize.height * 0.5,
@@ -156,7 +156,7 @@ void main() {
         givenPaint: givenPaint,
         givenScaleFactor: 2.0,
         expectedNumberOfPoints:
-        givenPencilStroke1PointCount + givenPencilStroke2PointCount,
+            givenPencilStroke1PointCount + givenPencilStroke2PointCount,
         expectedSize: Size(
           givenDrawingSize.width * 2.0,
           givenDrawingSize.height * 2.0,
@@ -245,15 +245,15 @@ void main() {
         name: 'Load a version that is not supported\n',
         givenBezierDistance: 1,
         givenJson:
-        '{"version":2,"points":["0;0","0;20","20;20","20;0"],"bezierDistance":1,"paint":{"color":"4278190080","strokeWidth":2.0}}',
+            '{"version":2,"points":["0;0","0;20","20;20","20;0"],"bezierDistance":1,"paint":{"color":"4278190080","strokeWidth":2.0}}',
         expectedNumberOfPoints: 0,
       ),
       PencilStrokeTest(
         name:
-        'Load json with invalid point format (first point only has x coordinate)\n',
+            'Load json with invalid point format (first point only has x coordinate)\n',
         givenBezierDistance: 1,
         givenJson:
-        '{"version":1,"points":["0","0;20","20;20","20;0"],"bezierDistance":1,"paint":{"color":"4278190080","strokeWidth":2.0}}',
+            '{"version":1,"points":["0","0;20","20;20","20;0"],"bezierDistance":1,"paint":{"color":"4278190080","strokeWidth":2.0}}',
         expectedNumberOfPoints: 0,
       ),
     ];

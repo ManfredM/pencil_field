@@ -36,18 +36,6 @@ typedef PencilDecorationCustomPainter = void Function({
 });
 
 class PencilDecoration {
-  final PencilDecorationType type;
-  final EdgeInsets padding;
-  final Color backgroundColor;
-  final Color patternColor;
-  final double strokeWidth;
-  final bool hasBorder;
-  final int? numberOfLines;
-  final double? spacing;
-
-  final PencilDecorationPaintProvider? paintProvider;
-  final PencilDecorationCustomPainter? customPainter;
-
   PencilDecoration({
     this.type = PencilDecorationType.blank,
     this.padding = const EdgeInsets.all(0),
@@ -110,6 +98,18 @@ class PencilDecoration {
       return true;
     }());
   }
+
+  final PencilDecorationType type;
+  final EdgeInsets padding;
+  final Color backgroundColor;
+  final Color patternColor;
+  final double strokeWidth;
+  final bool hasBorder;
+  final int? numberOfLines;
+  final double? spacing;
+
+  final PencilDecorationPaintProvider? paintProvider;
+  final PencilDecorationCustomPainter? customPainter;
 
   /// Paint the decoration. This paint is always done before the actual content
   /// is painted.

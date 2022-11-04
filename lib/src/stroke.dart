@@ -220,16 +220,14 @@ class PencilStroke {
       for (int pointIndex = 0;
           pointIndex < pointCount - 1 && !intersectionFound;
           pointIndex++) {
-        if (pointAt(pointIndex).x <=
-            pointAt(pointIndex + 1).x) {
+        if (pointAt(pointIndex).x <= pointAt(pointIndex + 1).x) {
           p1 = pointAt(pointIndex);
           p2 = pointAt(pointIndex + 1);
         } else {
           p2 = pointAt(pointIndex);
           p1 = pointAt(pointIndex + 1);
         }
-        intersectionFound =
-            PencilStroke.segmentIntersection(ip1, ip2, p1, p2);
+        intersectionFound = PencilStroke.segmentIntersection(ip1, ip2, p1, p2);
       }
     } else {
       // It's a point. Here wp1 and wp2 are the same. In order to have a

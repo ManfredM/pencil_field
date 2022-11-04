@@ -97,6 +97,7 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
           widget.controller.setDrawing(PencilDrawing(strokes: []));
           widget.controller.setMode(PencilMode.write);
           pencilPaint = writingPaint;
+          widget.onPencilDrawingChanged?.call(widget.controller.drawing);
           break;
         case _PencilToolType.undo:
           widget.controller.undo();

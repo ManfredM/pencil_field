@@ -125,5 +125,4 @@ bool compareImages(String expectedImagePath, Uint8List createdImage) {
   File file = File(expectedImagePath);
   final Uint8List expectedImage = file.readAsBytesSync();
   return listEquals(createdImage, expectedImage);
-
 }

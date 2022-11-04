@@ -10,7 +10,7 @@ for any freehand input like signatures or drawings.
 <br>
 
 ## How to use
-The PencilField can be embedded in any screen (in this case in a StatefulWidget):
+Just create PencilField widget and embedd it into your page:
 ```dart
 PencilField(
   controller: widget.controller,
@@ -21,15 +21,14 @@ PencilField(
     backgroundColor: Colors.white,
     patternColor: Colors.grey[300]!,
     numberOfLines: 10,
-    lineWidth: 2,
+    strokeWidth: 2,
     padding: const EdgeInsets.all(10),
   ),
   pencilOnly: true,
 )
  ```
 
-And resulting input can be displayed like so (also embedded in a StatefulWidget). As everything
-is stored in vector format scaling (e.g. for creating previews) is easy:
+And resulting input can be displayed like so. As everything is stored in vector format scaling (e.g. for creating previews) is easy:
 ```dart
 PencilDisplay(
   pencilDrawing: widget.controller.drawing.scale(
@@ -42,49 +41,15 @@ PencilDisplay(
 ## Features
 <br>
 
-### PencilField
-| Name                   | Type                      | Default          | Description                                              |
-|------------------------|---------------------------|------------------|----------------------------------------------------------|
-| key                    | `Key?`                    |                  | Assign key to PencilField widget                         |
-| controller             | `PencilController`        | Always required  | Controller to interact with the widget during user input |
-| pencilPaint            | `PencilPaint`             | Always required  | The paint that will be used for the current interaction  |
-| decoration             | `PencilDecoration?`       | Blank decoration | Style of the background (see below)                      |
-| onPencilDrawingChanged | `OnPencilDrawingChanged?` |                  | Callback when the content of the drawing changes         |
-| pencilOnly             | `bool`                    | false            | If set to true only input from pen devices is used       |
-<br>
+### PencilField / PencilFieldController
+The actual widget that provides the capability to capture and store freehand / pencil input. Each PencilField requires a controller that builds the bridge between the widget and PencilDrawing that stores the input.
 
-### PencilFieldDecoration
-| Name            | Type                  | Default            | Description                                                                                                          |
-|-----------------|-----------------------|--------------------|----------------------------------------------------------------------------------------------------------------------|
-| type            | `PencilDeorationType` | blank              | Type of decoration. It can either be blank, chequered, lines, dots. Examples can be found in test folder.            |
-| padding         | `EdgeInsets`          | EdgeInsets.all(0)  | Inner space of the decoration. The pattern will only be drawn inside                                                 |
-| backgroundColor | `Color`               | Colors.transparent | Color of the background.                                                                                             |
-| patternColor    | `Color`               | Colors.black54     | Color of the pattern                                                                                                 |
-| lineWidth       | `double`              | 1.0                | Line width for the pattern. In case of dots this is used for the radius.                                             |
-| numberOfLines   | `int`                 | 0                  | Number of lines. In case of the chequered pattern the vertical distance is used for the horizontal distance as well. |
-<br>
 
-### PencilDisplay
-| Name          | Type                | Default         | Description                         |
-|---------------|---------------------|-----------------|-------------------------------------|
-| key           | `Key?`              |                 | Assign key to PencilField widget    |
-| pencilDrawing | `PencilDrawing`     | Always required | The drawing that shall be displayed |
-| decoration    | `PencilDecoration?` |                 | Style of the background.            |
-<br>
+### PencilDrawing
+PencilDrawing stores the actual content captured by PencilField. You can store and retrieve this data in a versioned format, so that future version of PencilField can load old data.
 
-## PencilDrawing
-| Name          | Type                 | Default         | Description                                    |
-|---------------|----------------------|-----------------|------------------------------------------------|
-| strokes       | `<PencilStrokes>[]`  | Always required | Initial set of strokes. Can be an empty array. |
-
-PencilDrawing also lets you save (toJson) and load (fromJson) a drawing. It also provides its own versioning mechanism to ensure
-compatibility with future version.
-<br>
-<br>
-
-## Additional information
-A full example is provided in the repository.
-
+### Example
+A full example is provided. This example shows how to use PencilField and its litte sibling PencilDisplay. It also shows how to define pens for input and interactions like erase, undo and clear.
 <br>
 
 ## Upcoming features
