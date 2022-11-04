@@ -1,23 +1,31 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:pencil_field/pencil_field.dart';
 
-class PencilFieldWithTools extends StatefulWidget {
-  final PencilFieldController controller;
-  final OnPencilDrawingChanged? onPencilDrawingChanged;
+/// PencilFieldWithTools supports the following modes
+enum _PencilToolType { pen, marker, eraser, undo, clear }
 
+/// [PencilFieldWithTools] provides a complete input field with different
+/// tools based on the raw [PencilField].
+///
+/// Once the user has submitted the drawing is returned via the [onSubmitted]
+/// callback
+class PencilFieldWithTools extends StatefulWidget {
   const PencilFieldWithTools({
     super.key,
     required this.controller,
     this.onPencilDrawingChanged,
   });
 
+  final PencilFieldController controller;
+  final OnPencilDrawingChanged? onPencilDrawingChanged;
+
   @override
   State<PencilFieldWithTools> createState() => _PencilFieldWithToolsState();
 }
 
-//typedef _OnModeSelectedCallback = Function(PencilMode);
-typedef _OnToolSelectedCallback = Function(PencilToolType, PencilPaint);
+typedef _OnToolSelectedCallback = Function(_PencilToolType, PencilPaint);
 
 class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
   PencilPaint pencilPaint = PencilPaint(color: Colors.black, strokeWidth: 2.0);
@@ -25,23 +33,15 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
   PencilPaint eraserPaint =
       PencilPaint(color: Colors.red[200]!, strokeWidth: 2.0);
 
-  //PencilMode mode = PencilMode.write;
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(8.0),
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black38,
-        ),
-        borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-        color: Colors.grey[200]!,
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      decoration: const BoxDecoration(
+        color: PencilFieldColors.writePadControls,
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 400,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -49,31 +49,29 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
               currentPaint: pencilPaint,
               currentMode: widget.controller.mode,
               onToolSelected: _onToolSelected,
-              //onModeSelected: _onModeSelected,
-              onPrintJSON: _onPrintJSON,
             ),
-            Expanded(
+            Container(
+              decoration: const BoxDecoration(
+                color: PencilFieldColors.paper,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              padding: const EdgeInsets.all(8),
+              height: 400,
               child: PencilField(
                 controller: widget.controller,
                 pencilPaint: pencilPaint,
                 onPencilDrawingChanged: widget.onPencilDrawingChanged,
                 decoration: PencilDecoration(
                   type: PencilDecorationType.chequered,
-                  backgroundColor: Colors.white,
-                  patternColor: Colors.grey[300]!,
-                  hasFrame: true,
+                  backgroundColor: PencilFieldColors.paper,
+                  // PencilFieldColors.paper,
+                  patternColor: PencilFieldColors.paperPattern,
+                  hasBorder: true,
                   spacing: 20,
-                  lineWidth: 1,
-                  padding: const EdgeInsets.all(10),
-                  paintProvider: (column, row, paint) {
-                    if (row == 10 || column == 10) {
-                      paint.color = Colors.red;
-                      return paint;
-                    }
-                    return paint;
-                  },
+                  strokeWidth: 1.5,
+                  //padding: const EdgeInsets.all(10),
                 ),
-                pencilOnly: false,
+                pencilOnly: kReleaseMode,
               ),
             ),
           ],
@@ -82,148 +80,130 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
     );
   }
 
-  void _onToolSelected(PencilToolType type, PencilPaint newPaint) {
+  void _onToolSelected(_PencilToolType type, PencilPaint newPaint) {
     setState(() {
       switch (type) {
-        case PencilToolType.pen:
-        case PencilToolType.marker:
+        case _PencilToolType.pen:
+        case _PencilToolType.marker:
           writingPaint = newPaint;
           widget.controller.setMode(PencilMode.write);
           pencilPaint = writingPaint;
           break;
-        case PencilToolType.eraser:
+        case _PencilToolType.eraser:
           widget.controller.setMode(PencilMode.erase);
           pencilPaint = eraserPaint;
+          break;
+        case _PencilToolType.clear:
+          widget.controller.setDrawing(PencilDrawing(strokes: []));
+          widget.controller.setMode(PencilMode.write);
+          pencilPaint = writingPaint;
+          break;
+        case _PencilToolType.undo:
+          widget.controller.undo();
           break;
       }
     });
   }
-
-  void _onPrintJSON() {
-    setState(() {
-      widget.controller.undo();
-    });
-
-    //log(widget.controller.drawing.toJson().toString());
-  }
 }
-
-enum PencilToolType { pen, marker, eraser }
 
 class _PencilFieldTools extends StatelessWidget {
   _PencilFieldTools({
     required this.currentPaint,
     required this.currentMode,
     required this.onToolSelected,
-    //required this.onModeSelected,
-    required this.onPrintJSON,
   });
 
   final PencilPaint currentPaint;
   final PencilMode currentMode;
   final _OnToolSelectedCallback onToolSelected;
 
-  //final _OnModeSelectedCallback onModeSelected;
-  final VoidCallback onPrintJSON;
+  final penColors = <Color>[
+    PencilFieldColors.ink,
+    PencilFieldColors.pencil,
+    PencilFieldColors.pencilYellow,
+    PencilFieldColors.pencilOrange,
+    PencilFieldColors.pencilRed,
+    PencilFieldColors.pencilPurple,
+    PencilFieldColors.pencilLightBlue,
+    PencilFieldColors.pencilLightGreen,
+    PencilFieldColors.pencilGreen,
+    PencilFieldColors.pencilBrown,
+  ];
 
-  final blackPaint = PencilPaint(
-    color: Colors.black,
-    strokeWidth: 2.0,
-  );
-  final orangePaint = PencilPaint(
-    color: Colors.orange,
-    strokeWidth: 2.0,
-  );
-  final greenPaint = PencilPaint(
-    color: Colors.green,
-    strokeWidth: 2.0,
-  );
-  final redPaint = PencilPaint(
-    color: Colors.red,
-    strokeWidth: 2.0,
-  );
-  final bluePaint = PencilPaint(
-    color: Colors.blue,
-    strokeWidth: 2.0,
-  );
-  final markerYellowPaint = PencilPaint(
-    color: Colors.yellowAccent.withAlpha(128),
-    strokeWidth: 10.0,
-  );
-  final markerBluePaint = PencilPaint(
-    color: Colors.blueAccent.withAlpha(128),
-    strokeWidth: 10.0,
-  );
+  final markerColors = <Color>[
+    PencilFieldColors.markerBlue,
+    PencilFieldColors.markerGreen,
+    PencilFieldColors.markerOrange,
+    PencilFieldColors.markerYellow,
+    PencilFieldColors.markerPurple,
+    PencilFieldColors.markerRed,
+  ];
+
   final eraserPaint = PencilPaint(
-    color: Colors.red[200]!,
+    color: PencilFieldColors.eraser,
     strokeWidth: 2.0,
   );
 
   @override
   Widget build(BuildContext context) {
+    final pens = List<_ToolSelectorButton>.generate(
+      penColors.length,
+      (index) => _ToolSelectorButton(
+        type: _PencilToolType.pen,
+        onToolSelected: onToolSelected,
+        pencilPaint: PencilPaint(
+          color: penColors[index],
+          strokeWidth: 3.0,
+        ),
+        currentPaint: currentPaint,
+      ),
+    );
+    final markers = List<_ToolSelectorButton>.generate(
+      markerColors.length,
+      (index) => _ToolSelectorButton(
+        type: _PencilToolType.marker,
+        onToolSelected: onToolSelected,
+        pencilPaint: PencilPaint(
+          color: markerColors[index],
+          strokeWidth: 12.0,
+        ),
+        currentPaint: currentPaint,
+      ),
+    );
+
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
       child: SizedBox(
-        height: 60,
+        height: 96,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _ToolSelectorButton(
-              type: PencilToolType.pen,
-              pencilPaint: blackPaint,
+              type: _PencilToolType.clear,
+              pencilPaint:
+                  PencilPaint(color: PencilFieldColors.red, strokeWidth: 1.0),
               onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
             ),
-            const SizedBox(width: 8),
-            _ToolSelectorButton(
-              type: PencilToolType.pen,
-              pencilPaint: orangePaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
+            const Spacer(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: pens),
+                Row(children: markers),
+              ],
             ),
-            const SizedBox(width: 8),
+            const Spacer(),
             _ToolSelectorButton(
-              type: PencilToolType.pen,
-              pencilPaint: bluePaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
-            ),
-            const SizedBox(width: 8),
-            _ToolSelectorButton(
-              type: PencilToolType.pen,
-              pencilPaint: redPaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
-            ),
-            const SizedBox(width: 8),
-            _ToolSelectorButton(
-              type: PencilToolType.pen,
-              pencilPaint: greenPaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
-            ),
-            const SizedBox(width: 8),
-            _ToolSelectorButton(
-              type: PencilToolType.marker,
-              pencilPaint: markerYellowPaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
-            ),
-            const SizedBox(width: 8),
-            _ToolSelectorButton(
-              type: PencilToolType.marker,
-              pencilPaint: markerBluePaint,
-              onToolSelected: onToolSelected,
-              currentPaint: currentPaint,
-            ),
-            const SizedBox(width: 16),
-            _ToolSelectorButton(
-              type: PencilToolType.eraser,
+              type: _PencilToolType.eraser,
               pencilPaint: eraserPaint,
               onToolSelected: onToolSelected,
               currentPaint: currentPaint,
             ),
-            const SizedBox(width: 16),
-            _DebugButton(name: "JSON", onPressed: onPrintJSON),
+            _ToolSelectorButton(
+              type: _PencilToolType.undo,
+              pencilPaint: eraserPaint,
+              onToolSelected: onToolSelected,
+            ),
           ],
         ),
       ),
@@ -236,41 +216,52 @@ class _ToolSelectorButton extends StatelessWidget {
     required this.type,
     required this.onToolSelected,
     required this.pencilPaint,
-    required this.currentPaint,
+    this.currentPaint,
   });
 
-  final PencilToolType type;
+  final _PencilToolType type;
   final _OnToolSelectedCallback onToolSelected;
   final PencilPaint pencilPaint;
-  final PencilPaint currentPaint;
+  final PencilPaint? currentPaint;
 
   @override
   Widget build(BuildContext context) {
     late Icon icon;
     switch (type) {
-      case PencilToolType.pen:
+      case _PencilToolType.pen:
         icon = const Icon(LineAwesomeIcons.pen);
         break;
-      case PencilToolType.marker:
+      case _PencilToolType.marker:
         icon = const Icon(LineAwesomeIcons.marker);
         break;
-      case PencilToolType.eraser:
+      case _PencilToolType.eraser:
         icon = const Icon(LineAwesomeIcons.eraser);
+        break;
+      case _PencilToolType.clear:
+        icon = const Icon(LineAwesomeIcons.trash);
+        break;
+      case _PencilToolType.undo:
+        icon = const Icon(LineAwesomeIcons.undo);
         break;
     }
 
-    final bool isActiveColor = currentPaint == pencilPaint;
+    bool isActiveTool = false;
+    if (currentPaint != null) {
+      if (currentPaint!.paint.color.value == pencilPaint.paint.color.value) {
+        isActiveTool = true;
+      }
+    }
     return IconButton(
       icon: icon,
       style: ButtonStyle(
         foregroundColor: MaterialStateProperty.all<Color>(
-          isActiveColor ? Colors.white : pencilPaint.paint.color,
+          isActiveTool ? Colors.white : pencilPaint.paint.color,
         ),
         backgroundColor: MaterialStateProperty.all<Color>(
-          isActiveColor ? pencilPaint.paint.color : Colors.white,
+          isActiveTool ? pencilPaint.paint.color : PencilFieldColors.paper,
         ),
         overlayColor: MaterialStateProperty.all<Color>(
-          isActiveColor
+          isActiveTool
               ? Colors.white.withAlpha(64)
               : pencilPaint.paint.color.withAlpha(64),
         ),
@@ -280,27 +271,40 @@ class _ToolSelectorButton extends StatelessWidget {
   }
 }
 
-class _DebugButton extends StatelessWidget {
-  final String name;
-  final VoidCallback onPressed;
+class PencilFieldColors {
+  PencilFieldColors._();
 
-  const _DebugButton({
-    Key? key,
-    required this.name,
-    required this.onPressed,
-  }) : super(key: key);
+  static const Color ink = Color(0xFF0500FF);
+  static const Color pencil = Color(0xCC3C3C3E);
+  static const Color green = Color(0xFFA7DF31);
+  static const Color yellow = Color(0xFFEADE00);
+  static const Color orange = Color(0xFFF3983B);
+  static const Color red = Color(0xFFE85476);
+  static const Color blue = Color(0xFF4094CF);
+  static const Color purple = Color(0xFFBB6BD9);
+  static const Color markerGreen = Color(0x80A7DF31);
+  static const Color markerYellow = Color(0x80EADE00);
+  static const Color markerOrange = Color(0x80F3983B);
+  static const Color markerRed = Color(0x80E85476);
+  static const Color markerBlue = Color(0x804094CF);
+  static const Color markerPurple = Color(0x80BB6BD9);
 
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.all<Color>(Colors.yellow),
-        backgroundColor: MaterialStateProperty.all<Color>(Colors.black),
-        overlayColor:
-            MaterialStateProperty.all<Color>(Colors.white.withAlpha(64)),
-      ),
-      onPressed: onPressed,
-      child: Text(name),
-    );
-  }
+  static const Color pencilYellow = Color(0xFFCFBF1C);
+  static const Color pencilOrange = Color(0xFFDB762C);
+  static const Color pencilRed = Color(0xFFE93732);
+  static const Color pencilPurple = Color(0xFF9E4FD1);
+  static const Color pencilLightBlue = Color(0xFF83E3F7);
+  static const Color pencilLightGreen = Color(0xFF7BDC44);
+  static const Color pencilGreen = Color(0xFF2F661A);
+  static const Color pencilBrown = Color(0xFFB68458);
+
+  static const Color eraser = Color(0xFFEF9A9A);
+
+  static const Color paper = Color(0xFFFFFEF4);
+  static const Color transparentPaper = Color(0xFFFFFEF4); //Color(0xCCFFFEF4);
+  static const Color paperPattern = Colors.black12;
+
+  static const Color appBarColor = Color(0xFF796E84);
+  static const Color writePadBackground = Color(0xFF667D8B);
+  static const Color writePadControls = Color(0xFFB3BDBF);
 }

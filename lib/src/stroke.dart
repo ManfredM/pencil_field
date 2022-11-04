@@ -145,9 +145,6 @@ class PencilStroke {
     return size;
   }
 
-  /*@override
-  List<Object> get props => [points, bezierDistance, pencilPaint];*/
-
   /// Creates a path that can be drawn on a canvas
   Path createDrawablePath() {
     //if (bezierDistance == 1) return _drawAsLine();
@@ -223,14 +220,6 @@ class PencilStroke {
       for (int pointIndex = 0;
           pointIndex < pointCount - 1 && !intersectionFound;
           pointIndex++) {
-        /*if (writeStroke.points[pointIndex].x <=
-              writeStroke.points[pointIndex + 1].x) {
-            wp1 = writeStroke.points[pointIndex];
-            wp2 = writeStroke.points[pointIndex + 1];
-          } else {
-            wp2 = writeStroke.points[pointIndex];
-            wp1 = writeStroke.points[pointIndex + 1];
-          }*/
         if (pointAt(pointIndex).x <=
             pointAt(pointIndex + 1).x) {
           p1 = pointAt(pointIndex);

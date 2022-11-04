@@ -16,6 +16,7 @@ class PencilDrawing {
     }
   }
 
+  /// Create a [PencilDrawing] from an existing drawing.
   PencilDrawing.from({required PencilDrawing pencilDrawing}) {
     _strokes.addAll(pencilDrawing._strokes);
   }
@@ -66,6 +67,8 @@ class PencilDrawing {
     removeStrokeAt(strokeCount - 1);
   }
 
+  /// Calculate the total size of the drawing. This might be useful if a preview
+  /// of a drawing shall be scaled to fit into a given space.
   Size calculateTotalSize() {
     Size drawingSize = const Size(0, 0);
     for (final stroke in _strokes) {

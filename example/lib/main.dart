@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pencil_field/pencil_field.dart';
-
-import 'pencil_field_with_tools.dart';
+import 'package:pencil_field_example/pencil_field_with_tools.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,7 +43,6 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
   final String title;
 
   @override
@@ -66,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Spacer(),
-            _PencilDisplay(controller: pencilController),
+            _ScalingPencilDisplay(controller: pencilController),
             const SizedBox(height: 100),
             PencilFieldWithTools(
               controller: pencilController,
@@ -84,16 +82,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class _PencilDisplay extends StatefulWidget {
+class _ScalingPencilDisplay extends StatefulWidget {
   final PencilFieldController controller;
 
-  const _PencilDisplay({required this.controller});
+  const _ScalingPencilDisplay({required this.controller});
 
   @override
-  State<_PencilDisplay> createState() => _PencilDisplayState();
+  State<_ScalingPencilDisplay> createState() => _ScalingPencilDisplayState();
 }
 
-class _PencilDisplayState extends State<_PencilDisplay> {
+class _ScalingPencilDisplayState extends State<_ScalingPencilDisplay> {
   double scale = 1.0;
 
   @override
@@ -128,7 +126,9 @@ class _PencilDisplayState extends State<_PencilDisplay> {
               pencilDrawing: widget.controller.drawing.scale(
                 scale: scale,
               ),
-              decoration: PencilDecoration(backgroundColor: Colors.white),
+              decoration: PencilDecoration(
+                backgroundColor: PencilFieldColors.paper,
+              ),
             ),
           ),
         ],

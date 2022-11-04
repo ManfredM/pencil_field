@@ -50,9 +50,8 @@ void main() {
       final image = await picture.toImage(500, 500);
       final byteImage = await image.toByteData(format: ImageByteFormat.png);
       final imageAsPNG = byteImage!.buffer.asUint8List();
-      await writeImage(resultingFilePath, imageAsPNG);
-
-      expect(await compareImages(expectedFilePath, imageAsPNG), true);
+      writeImage(resultingFilePath, imageAsPNG);
+      expect(compareImages(expectedFilePath, imageAsPNG), true);
     }
 
     final decorationTests = <PencilDecorationTest>[
@@ -148,7 +147,7 @@ void main() {
             backgroundColor: decorationTest.givenBackgroundColor!,
             patternColor: decorationTest.givenPatternColor!,
             numberOfLines: decorationTest.givenNumberOfLines!,
-            hasFrame: decorationTest.givenHasFrame!,
+            hasBorder: decorationTest.givenHasFrame!,
             strokeWidth: 5,
           );
           paintAndSave(
@@ -175,7 +174,7 @@ void main() {
             backgroundColor: decorationTest.givenBackgroundColor!,
             patternColor: decorationTest.givenPatternColor!,
             spacing: decorationTest.givenSpacing!,
-            hasFrame: decorationTest.givenHasFrame!,
+            hasBorder: decorationTest.givenHasFrame!,
             strokeWidth: 5,
           );
           paintAndSave(
@@ -221,9 +220,26 @@ void main() {
             backgroundColor: decorationTest.givenBackgroundColor!,
             patternColor: decorationTest.givenPatternColor!,
             spacing: decorationTest.givenSpacing!,
-            hasFrame: decorationTest.givenHasFrame!,
+            hasBorder: decorationTest.givenHasFrame!,
             paintProvider: decorationTest.givenPaintProvider!,
             strokeWidth: 5,
+          );
+          paintAndSave(
+            result,
+            decorationTest.resultFilePath,
+            decorationTest.expectedFilePath,
+          );
+        },
+      ),
+      PencilDecorationTest(
+        name: 'no decoration',
+        givenType: PencilDecorationType.blank,
+        givenBackgroundColor: Colors.white,
+        resultFilePath: 'test/resulting_output/blank_decoration.png',
+        expectedFilePath: 'test/expected_output/blank_decoration.png',
+        runner: (decorationTest) async {
+          final result = PencilDecoration(
+            type: decorationTest.givenType,
           );
           paintAndSave(
             result,

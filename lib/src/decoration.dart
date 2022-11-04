@@ -41,7 +41,7 @@ class PencilDecoration {
   final Color backgroundColor;
   final Color patternColor;
   final double strokeWidth;
-  final bool hasFrame;
+  final bool hasBorder;
   final int? numberOfLines;
   final double? spacing;
 
@@ -54,7 +54,7 @@ class PencilDecoration {
     this.backgroundColor = Colors.transparent,
     this.patternColor = Colors.black54,
     this.strokeWidth = 1.0,
-    this.hasFrame = false,
+    this.hasBorder = false,
     this.numberOfLines,
     this.spacing,
     this.paintProvider,
@@ -114,16 +114,6 @@ class PencilDecoration {
   /// Paint the decoration. This paint is always done before the actual content
   /// is painted.
   void paint(Canvas canvas, Size size) {
-    if (type == PencilDecorationType.blank) return;
-
-    // All predefined pattern go here
-    /*final paint = Paint()
-      ..color = patternColor
-      ..strokeWidth = lineWidth;*/
-    /*final paint = Paint()
-      ..color = Colors.deepOrange
-      ..strokeWidth = lineWidth;*/
-
     // Width and height of the pattern
     final patternHeight = size.height - padding.top - padding.bottom;
     final patternWidth = size.width - padding.left - padding.right;
@@ -161,12 +151,16 @@ class PencilDecoration {
     }
 
     // Draw the background
-    final backgroundPaint = Paint();
-    backgroundPaint.color = backgroundColor;
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.fill;
     canvas.drawRect(
       Rect.fromLTWH(0.0, 0.0, size.width, size.height),
       backgroundPaint,
     );
+
+    // If type is blank only the background is drawn
+    if (type == PencilDecorationType.blank) return;
 
     // ySpacing will be calculated either based on number of lines or the
     // spacing given.
@@ -248,7 +242,7 @@ class PencilDecoration {
     }
 
     // Finally draw the frame
-    if (hasFrame) {
+    if (hasBorder) {
       Paint? linePaint = Paint()
         ..color = patternColor
         ..strokeWidth = strokeWidth

@@ -93,21 +93,12 @@ class PencilFieldController {
   void _calculateIntersections() {
     // Check the last line that has been added to the eraser path
     if (_eraserStroke!.pointCount < 2) return;
-    //assert(_eraserPath!.points.length >= 2);
     final int eraserIndex = _eraserStroke!.pointCount - 1;
 
     // Define the line that will be tested for intersection with a writing
     // path. p1.x must be less or equal than p2.x.
     Point ep1;
     Point ep2;
-    /*if (_eraserStroke!.points[eraserIndex - 1].x <=
-        _eraserStroke!.points[eraserIndex].x) {
-      ep1 = _eraserStroke!.points[eraserIndex - 1];
-      ep2 = _eraserStroke!.points[eraserIndex];
-    } else {
-      ep2 = _eraserStroke!.points[eraserIndex - 1];
-      ep1 = _eraserStroke!.points[eraserIndex];
-    }*/
     if (_eraserStroke!.pointAt(eraserIndex - 1).x <=
         _eraserStroke!.pointAt(eraserIndex).x) {
       ep1 = _eraserStroke!.pointAt(eraserIndex - 1);
@@ -126,92 +117,12 @@ class PencilFieldController {
       }
 
       final PencilStroke writeStroke = _drawing.strokeAt(pathIndex);
-      /*bool intersectionFound = false;
-      Point wp1;
-      Point wp2;
-
-      // Iterate over all lines in the path and stop immediately if
-      // an intersection is found.
-      if (writeStroke.pointCount > 1) {
-        // we have a line
-        for (int pointIndex = 0;
-            pointIndex < writeStroke.pointCount - 1 && !intersectionFound;
-            pointIndex++) {
-          /*if (writeStroke.points[pointIndex].x <=
-              writeStroke.points[pointIndex + 1].x) {
-            wp1 = writeStroke.points[pointIndex];
-            wp2 = writeStroke.points[pointIndex + 1];
-          } else {
-            wp2 = writeStroke.points[pointIndex];
-            wp1 = writeStroke.points[pointIndex + 1];
-          }*/
-          if (writeStroke.pointAt(pointIndex).x <=
-              writeStroke.pointAt(pointIndex + 1).x) {
-            wp1 = writeStroke.pointAt(pointIndex);
-            wp2 = writeStroke.pointAt(pointIndex + 1);
-          } else {
-            wp2 = writeStroke.pointAt(pointIndex);
-            wp1 = writeStroke.pointAt(pointIndex + 1);
-          }
-          intersectionFound =
-              PencilStroke.segmentIntersection(ep1, ep2, wp1, wp2);
-        }
-      } else {
-        // It's a point. Here wp1 and wp2 are the same. In order to have a
-        // line for intersection calculation we create a little virtual
-        // cross.
-        const epsilon = 2.0;
-        wp1 = writeStroke.pointAt(0);
-        wp2 = Point(wp1.x + epsilon, wp1.y + epsilon);
-        final wp3 = Point(wp1.x + epsilon, wp1.y - epsilon);
-        final wp4 = Point(wp1.x - epsilon, wp1.y + epsilon);
-        final wp5 = Point(wp1.x - epsilon, wp1.y - epsilon);
-        intersectionFound =
-            PencilStroke.segmentIntersection(ep1, ep2, wp1, wp2);
-        intersectionFound |=
-            PencilStroke.segmentIntersection(ep1, ep2, wp1, wp3);
-        intersectionFound |=
-            PencilStroke.segmentIntersection(ep1, ep2, wp1, wp4);
-        intersectionFound |=
-            PencilStroke.segmentIntersection(ep1, ep2, wp1, wp5);
-      }*/
       if (writeStroke.intersectsWithSegment(ep1, ep2)) {
         _atLeastOnePathMarkedForErase = true;
         _writePathsMarkedForErase[pathIndex] = true;
       }
     }
   }
-
-/*  // Returns true if two lines defined by their end points intersect with
-  // each other.
-  bool _segmentIntersection(Point p0, Point p1, Point p2, Point p3) {
-    final num a1 = p1.y - p0.y;
-    final num b1 = p0.x - p1.x;
-    final num c1 = a1 * p0.x + b1 * p0.y;
-    final num a2 = p3.y - p2.y;
-    final num b2 = p2.x - p3.x;
-    final num c2 = a2 * p2.x + b2 * p2.y;
-    final num denominator = a1 * b2 - a2 * b1;
-
-    if (denominator == 0) {
-      return false;
-    }
-
-    final num intersectX = (b2 * c1 - b1 * c2) / denominator;
-    final num intersectY = (a1 * c2 - a2 * c1) / denominator;
-    final num rx0 = (intersectX - p0.x) / (p1.x - p0.x);
-    final num ry0 = (intersectY - p0.y) / (p1.y - p0.y);
-    final num rx1 = (intersectX - p2.x) / (p3.x - p2.x);
-    final num ry1 = (intersectY - p2.y) / (p3.y - p2.y);
-
-    if (((rx0 >= 0 && rx0 <= 1) || (ry0 >= 0 && ry0 <= 1)) &&
-        ((rx1 >= 0 && rx1 <= 1) || (ry1 >= 0 && ry1 <= 1))) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-*/
 
   void _removeWritePathsMarkedForErase() {
     if (_atLeastOnePathMarkedForErase) {
@@ -281,18 +192,6 @@ class PencilFieldController {
       }
     }
   }
-
-  /*Size calculateTotalSize() {
-    if (_totalSize != null) return _totalSize!;
-
-    Size drawingSize = const Size(0, 0);
-    for (final stroke in _drawing.strokes) {
-      final strokeSize = stroke.calculateTotalSize();
-      drawingSize = Size(max(drawingSize.width, strokeSize.width),
-          max(drawingSize.height, strokeSize.height));
-    }
-    return drawingSize;
-  }*/
 
   /// Get the drawing as an image. The function requires at least an background
   /// color. If the background pattern shall be added the optional parameter

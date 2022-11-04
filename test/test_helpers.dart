@@ -115,20 +115,15 @@ List<PencilStroke> generateHelloStrokes() {
   return pencilStrokes;
 }
 
-Future<void> writeImage(
-  String fileName,
-  Uint8List image,
-) async {
-  print(fileName);
+void writeImage(String fileName, Uint8List image) {
   File file = File(fileName);
   file.writeAsBytesSync(image, flush: true);
 }
 
-Future<bool> compareImages(
-  String expectedImagePath,
-  Uint8List createdImage,
-) async {
+/*Future<bool>*/
+bool compareImages(String expectedImagePath, Uint8List createdImage) {
   File file = File(expectedImagePath);
-  final expectedImage = file.readAsBytesSync();
+  final Uint8List expectedImage = file.readAsBytesSync();
   return listEquals(createdImage, expectedImage);
+
 }

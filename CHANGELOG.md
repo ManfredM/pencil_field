@@ -49,3 +49,6 @@
 
 * **BREAKING** Removed equatable dependency
 * **BREAKING** Renamed methods dealing with strokes of class PencilDrawing for better clarity.
+* **IMPROVEMENT** Added many more tests
+* **IMPROVEMENT** Refactoring of code for better readability
+
