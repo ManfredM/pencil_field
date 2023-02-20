@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 
 import 'paint.dart';
 
+/// This value controls the minimum distance required between points that a
+/// point is added using [addPointToLastStroke].
+const _kMinimumDistance = 0.5;
+
 class PencilStroke {
   PencilStroke({
     required List<Point> points,
@@ -13,11 +17,17 @@ class PencilStroke {
     required this.pencilPaint,
   }) : assert(bezierDistance >= 1 && bezierDistance <= 3) {
     _points.addAll(points);
+    _createPathAsLine();
   }
 
   final List<Point> _points = [];
+
+  // Points as delivered by the platform
+  //final List<Offset> _rawPoints = [];
+
   final int bezierDistance;
   final PencilPaint pencilPaint;
+  final _path = Path();
 
   //final List<int> _list = [];
 
@@ -28,17 +38,68 @@ class PencilStroke {
   @Deprecated('Will be removed in version 1.0.0.')
   List<Point> get points => _points;
 
-  /*PencilStroke addPoint(Point point) {
-    return PencilStroke(
-      points: [...points, point],
-      bezierDistance: bezierDistance,
-      pencilPaint: pencilPaint,
-    );
-  }*/
   int addPoint(Point point) {
-    //_list.add(10);
-    _points.add(point);
+    // Only if the new points has a certain distance from the last point
+    // it will be added to avoid unnecessary high point density.
+    //_rawPoints.add(Offset(point.x.toDouble(), point.y.toDouble()));
+    _addPointWithMinimumDistance(point);
+    /*if (_addPointWithMinimumDistance(point)) {
+      //_points.add(point);
+      if (bezierDistance > 1 && _rawPoints.length > 3) {
+        print("calculating spline");
+        // EXPERIMENTAL FOR ANDROID -->
+        final last4RawPoints = List<Offset>.from(_rawPoints.getRange(
+          _rawPoints.length - 4,
+          _rawPoints.length,
+        ));
+        //final catmullRomCurve = CatmullRomSpline(last4RawPoints, tension: 0.5);
+        //final catmullRomCurve = CatmullRomSpline(last4RawPoints, tension: 0.0);
+        final catmullRomCurve = CatmullRomSpline(_rawPoints, tension: 0);
+        final newPoints =
+            catmullRomCurve.generateSamples().map((e) => e.value).toList();
+        //print("${newPoints.length}");
+        //_points = List<Point>.from(_points.getRange(0, _points.length-4));
+        _points.clear();
+        for (final newPoint in newPoints) {
+          //print(newPoint);
+          _addPointWithMinimumDistance(Point(newPoint.dx, newPoint.dy));
+        }
+        // <-- EXPERIMENTAL FOR ANDROID
+      } else {
+        // Add point to path
+        if (_points.length == 1) {
+          // Starting point of path
+          _path.moveTo(point.x.toDouble(), point.y.toDouble());
+        } else {
+          // Next point in path
+          _path.lineTo(point.x.toDouble(), point.y.toDouble());
+        }
+      }
+    }*/
     return _points.length;
+  }
+
+  // Adds a point to the list of points if the minimum distance is exceeded.
+  // This avoids having too many points that cannot be differentiated by the
+  // user.
+  bool _addPointWithMinimumDistance(Point point) {
+    if (pointCount == 0) {
+      _points.add(point);
+      _path.moveTo(point.x.toDouble(), point.y.toDouble());
+      return true;
+    }
+
+    final Point previousPoint = _points.last;
+    final num distance = sqrt(
+        ((point.x - previousPoint.x) * (point.x - previousPoint.x)) +
+            ((point.y - previousPoint.y) * (point.y - previousPoint.y)));
+    const epsilon = _kMinimumDistance;
+    if (distance > epsilon) {
+      _points.add(point);
+      _path.lineTo(point.x.toDouble(), point.y.toDouble());
+      return true;
+    }
+    return false;
   }
 
   Point pointAt(int index) => _points[index];
@@ -145,28 +206,45 @@ class PencilStroke {
     return size;
   }
 
+/*List<Offset> asPoints() {
+    return _controlPoints;
+    /*final offsets = _points.map((p) => Offset(p.x.toDouble(), p.y.toDouble()))
+        .toList();*/
+    /*if (_offsetPoints.length < 4) {
+      // At least 4 control points are needed for Catmull splines to be
+      // generated
+      return _offsetPoints;
+    }
+    final spline = CatmullRomSpline(_offsetPoints);
+    return spline.generateSamples().map((e) => e.value).toList();*/
+  }*/
+
   /// Creates a path that can be drawn on a canvas
   Path createDrawablePath() {
-    //if (bezierDistance == 1) return _drawAsLine();
-    return _drawAsBezier();
+    /*if (PencilStroke.defaultBezierDistance() == 3) {
+      // Will be much slower on Android as path will be created after
+      // each stroke
+      return _createPathAsBezier();
+    }*/
+    return _path;
   }
 
-  /*
-  Path _drawAsLine() {
-    final path = Path();
+  Path _createPathAsLine() {
+    if (_points.isEmpty) return _path;
+
     int index = 0;
-    path.moveTo(points[index].x.toDouble(), points[index].y.toDouble());
+    _path.moveTo(_points[index].x.toDouble(), _points[index].y.toDouble());
     for (; index < pointCount; index++) {
-      path.lineTo(points[index].x.toDouble(), points[index].y.toDouble());
+      _path.lineTo(_points[index].x.toDouble(), _points[index].y.toDouble());
     }
-    return path;
+    return _path;
   }
-  */
 
-  Path _drawAsBezier() {
+  /*Path _createPathAsBezier() {
     // Each path that needs to be reconstructed as bezier path must set
     // the bezierPath property to null.
     Path bezierPath = Path();
+    if (_points.isEmpty) return bezierPath;
 
     // Correct the bezierDistance to achieve best possible results. These values
     // are empiric corrections.
@@ -204,7 +282,7 @@ class PencilStroke {
       }
     }
     return bezierPath;
-  }
+  }*/
 
   /// Calculate if this stroke intersects with a segment defined by start [ip1]
   /// and end [ip2] point.

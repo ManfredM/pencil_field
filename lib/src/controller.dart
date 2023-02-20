@@ -182,6 +182,8 @@ class PencilFieldController {
         }
       }
       canvas.drawPath(pencilPath.createDrawablePath(), paint);
+      //Experimental
+      //canvas.drawPoints(PointMode.points, pencilPath.asPoints(), paint);
     }
     if (_eraserStroke != null) {
       if (_eraserStroke!.pointCount > 0) {

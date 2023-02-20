@@ -4,10 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'stroke.dart';
 
-/// This value controls the minimum distance required between points that a
-/// point is added using [addPointToLastStroke].
-const _kMinimumDistance = 0.5;
-
 /// Store a list of paths that belong together
 class PencilDrawing {
   PencilDrawing({List<PencilStroke>? strokes}) {
@@ -91,25 +87,12 @@ class PencilDrawing {
     return PencilDrawing(strokes: scaledPencilStrokes);
   }
 
-  /// Adds a point to the last stroke in the drawing. It will only add a point
-  /// if the distance between the last point and the new point in more than
-  /// [kMinimumDistance] apart from last point in last stroke.
+  /// Adds a point to the last stroke in the drawing.
   void addPointToLastStroke(Point point) {
-    bool addPoint = true;
-    if (_strokes.last.pointCount > 0) {
-      final Point previousPoint = _strokes.last.last;
-      final num distance = sqrt(
-          ((point.x - previousPoint.x) * (point.x - previousPoint.x)) +
-              ((point.y - previousPoint.y) * (point.y - previousPoint.y)));
-      const epsilon = _kMinimumDistance;
-      if (distance < epsilon) addPoint = false;
-    }
-    if (addPoint) {
-      _strokes.last.addPoint(point);
-    }
+    _strokes.last.addPoint(point);
   }
 
-  /// Store the drawing in a versioned jsan map.
+  /// Store the drawing in a versioned json map.
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'version': 1,

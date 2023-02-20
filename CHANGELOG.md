@@ -53,3 +53,6 @@
 * **IMPROVEMENT** Refactoring of code for better readability
 * **IMPROVEMENT** More comprehensive example is provided
 
+## 0.4.1
+* **IMPROVEMENT** Moved some functions from PencilDrawing to PencilStroke
+
