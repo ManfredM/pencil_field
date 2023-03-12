@@ -13,6 +13,7 @@ jobs:
     - run: mkdir test/resulting_output
     - run: flutter test > test-results.txt
     - run: ls $GITHUB_WORKSPACE
+    - run: cat $GITHUB_WORKSPACE/test-results.txt
     - run: grep -c 'All tests passed!' $GITHUB_WORKSPACE/test-results.txt
     - run: |
         if [ "$(grep -c 'All tests passed!' test-results.txt)" -ne 1 ]; then
