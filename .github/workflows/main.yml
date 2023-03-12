@@ -14,7 +14,6 @@ jobs:
     - run: flutter test --machine > test_results.json
 
     - name: Check Test Results
-        id: check-test-results
         run: |
           if [ "$(grep -c 'All tests passed!' $GITHUB_WORKSPACE/test-results.json)" -ne 1 ]; then
             echo "One or more tests failed. Please fix the failing tests and try again."
