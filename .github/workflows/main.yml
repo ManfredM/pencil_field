@@ -11,7 +11,7 @@ jobs:
     - run: flutter --version
     - run: dart analyze
     - run: mkdir test/resulting_output
-    - run: flutter test --machine > test_results.json
+    - run: flutter test --machine > test-results.json
     - run: ls $GITHUB_WORKSPACE
     - run: grep -c 'All tests passed!' test-results.json
     - run: |
