@@ -14,7 +14,7 @@ jobs:
     - run: flutter test > test-results.txt
     - run: ls $GITHUB_WORKSPACE
     - run: cat $GITHUB_WORKSPACE/test-results.txt
-    - run: grep -c 'All tests passed!' $GITHUB_WORKSPACE/test-results.txt
+    - run: grep -c '35 tests passed.' $GITHUB_WORKSPACE/test-results.txt
     - run: |
         if [ "$(grep -c 'All tests passed!' test-results.txt)" -ne 1 ]; then
           echo "One or more tests failed. Please fix the failing tests and try again."
