@@ -16,7 +16,7 @@ jobs:
     - run: cat $GITHUB_WORKSPACE/test-results.txt
     - run: grep -c '35 tests passed.' $GITHUB_WORKSPACE/test-results.txt
     - run: |
-        if [ "$(grep -c 'All tests passed!' test-results.txt)" -ne 1 ]; then
+        if [ "$(grep -c '35 tests passed.' test-results.txt)" -ne 1 ]; then
           echo "One or more tests failed. Please fix the failing tests and try again."
           exit 1
         fi
