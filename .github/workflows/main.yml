@@ -11,11 +11,11 @@ jobs:
     - run: flutter --version
     - run: dart analyze
     - run: mkdir test/resulting_output
-    - run: flutter test --machine > test-results.json
+    - run: flutter test > test-results.txt
     - run: ls $GITHUB_WORKSPACE
-    - run: grep -c 'All tests passed!' test-results.json
+    - run: grep -c 'All tests passed!' test-results.txt
     - run: |
-        if [ "$(grep -c 'All tests passed!' test-results.json)" -ne 1 ]; then
+        if [ "$(grep -c 'All tests passed!' test-results.txt)" -ne 1 ]; then
           echo "One or more tests failed. Please fix the failing tests and try again."
           exit 1
         fi
