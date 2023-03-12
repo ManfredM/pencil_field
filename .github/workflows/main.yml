@@ -12,6 +12,7 @@ jobs:
     - run: dart analyze
     - run: mkdir test/resulting_output
     - run: flutter test --machine > test_results.json
+    - run: ls $GITHUB_WORKSPACE
     - run: grep -c 'All tests passed!' test-results.json
     - run: |
         if [ "$(grep -c 'All tests passed!' test-results.json)" -ne 1 ]; then
