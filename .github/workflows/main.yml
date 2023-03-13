@@ -7,16 +7,22 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: subosito/flutter-action@v2
-    - run: flutter pub get
-    - run: flutter --version
-    - run: dart analyze
-    - run: mkdir test/resulting_output
-    - run: flutter test > test-results.txt
-    - run: ls $GITHUB_WORKSPACE
-    - run: cat $GITHUB_WORKSPACE/test-results.txt
-    - run: grep -c '35 tests passed.' $GITHUB_WORKSPACE/test-results.txt
-    - run: |
-        if [ "$(grep -c '35 tests passed.' test-results.txt)" -ne 1 ]; then
+
+    - name: Prepare Flutter environment
+      run: |
+        flutter pub get
+        flutter --version
+
+    - name: Analyze the Dart code
+      run: dart analyze
+
+    - name: run 35 unit tests and check if all test pass
+      run: |
+        mkdir test/resulting_output
+        flutter test > test-results.txt
+        ls $GITHUB_WORKSPACE
+        cat $GITHUB_WORKSPACE/test-results.txt
+        if [ "$(grep -c '35 tests passed.' $GITHUB_WORKSPACE/test-results.txt)" -ne 1 ]; then
           echo "One or more tests failed. Please fix the failing tests and try again."
           exit 1
         fi
