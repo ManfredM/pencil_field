@@ -17,7 +17,8 @@ class PencilStroke {
     required this.pencilPaint,
   }) : assert(bezierDistance >= 1 && bezierDistance <= 3) {
     _points.addAll(points);
-    _createPathAsLine();
+    _requiresNewPathCreation = true;
+    //_createPathAsLine();
   }
 
   final List<Point> _points = [];
@@ -27,6 +28,7 @@ class PencilStroke {
 
   final int bezierDistance;
   final PencilPaint pencilPaint;
+  bool _requiresNewPathCreation = false;
   final _path = Path();
 
   //final List<int> _list = [];
@@ -43,39 +45,6 @@ class PencilStroke {
     // it will be added to avoid unnecessary high point density.
     //_rawPoints.add(Offset(point.x.toDouble(), point.y.toDouble()));
     _addPointWithMinimumDistance(point);
-    /*if (_addPointWithMinimumDistance(point)) {
-      //_points.add(point);
-      if (bezierDistance > 1 && _rawPoints.length > 3) {
-        print("calculating spline");
-        // EXPERIMENTAL FOR ANDROID -->
-        final last4RawPoints = List<Offset>.from(_rawPoints.getRange(
-          _rawPoints.length - 4,
-          _rawPoints.length,
-        ));
-        //final catmullRomCurve = CatmullRomSpline(last4RawPoints, tension: 0.5);
-        //final catmullRomCurve = CatmullRomSpline(last4RawPoints, tension: 0.0);
-        final catmullRomCurve = CatmullRomSpline(_rawPoints, tension: 0);
-        final newPoints =
-            catmullRomCurve.generateSamples().map((e) => e.value).toList();
-        //print("${newPoints.length}");
-        //_points = List<Point>.from(_points.getRange(0, _points.length-4));
-        _points.clear();
-        for (final newPoint in newPoints) {
-          //print(newPoint);
-          _addPointWithMinimumDistance(Point(newPoint.dx, newPoint.dy));
-        }
-        // <-- EXPERIMENTAL FOR ANDROID
-      } else {
-        // Add point to path
-        if (_points.length == 1) {
-          // Starting point of path
-          _path.moveTo(point.x.toDouble(), point.y.toDouble());
-        } else {
-          // Next point in path
-          _path.lineTo(point.x.toDouble(), point.y.toDouble());
-        }
-      }
-    }*/
     return _points.length;
   }
 
@@ -85,7 +54,8 @@ class PencilStroke {
   bool _addPointWithMinimumDistance(Point point) {
     if (pointCount == 0) {
       _points.add(point);
-      _path.moveTo(point.x.toDouble(), point.y.toDouble());
+      _requiresNewPathCreation = true;
+      //_path.moveTo(point.x.toDouble(), point.y.toDouble());
       return true;
     }
 
@@ -96,7 +66,8 @@ class PencilStroke {
     const epsilon = _kMinimumDistance;
     if (distance > epsilon) {
       _points.add(point);
-      _path.lineTo(point.x.toDouble(), point.y.toDouble());
+      _requiresNewPathCreation = true;
+      //_path.lineTo(point.x.toDouble(), point.y.toDouble());
       return true;
     }
     return false;
@@ -206,83 +177,51 @@ class PencilStroke {
     return size;
   }
 
-/*List<Offset> asPoints() {
-    return _controlPoints;
-    /*final offsets = _points.map((p) => Offset(p.x.toDouble(), p.y.toDouble()))
-        .toList();*/
-    /*if (_offsetPoints.length < 4) {
-      // At least 4 control points are needed for Catmull splines to be
-      // generated
-      return _offsetPoints;
-    }
-    final spline = CatmullRomSpline(_offsetPoints);
-    return spline.generateSamples().map((e) => e.value).toList();*/
-  }*/
-
   /// Creates a path that can be drawn on a canvas
   Path createDrawablePath() {
-    /*if (PencilStroke.defaultBezierDistance() == 3) {
-      // Will be much slower on Android as path will be created after
-      // each stroke
-      return _createPathAsBezier();
-    }*/
+    if (_requiresNewPathCreation) {
+      _createPathAsLine();
+    }
     return _path;
   }
 
+  // Returns a path that is created by connecting all points with a line. To
+  // smooth the line, a bezier curve is used.
   Path _createPathAsLine() {
+    _path.reset();
     if (_points.isEmpty) return _path;
 
-    int index = 0;
-    _path.moveTo(_points[index].x.toDouble(), _points[index].y.toDouble());
-    for (; index < pointCount; index++) {
-      _path.lineTo(_points[index].x.toDouble(), _points[index].y.toDouble());
+    // Move to the first point
+    _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
+
+    for (int i = 0; i < _points.length - 1; i++) {
+      final p0 = i > 0 ? _points[i - 1] : _points[i];
+      final p1 = _points[i];
+      final p2 = _points[i + 1];
+      final p3 = i < _points.length - 2 ? _points[i + 2] : p2;
+
+      final cp1 = Offset(
+        p1.x.toDouble() + (p2.x.toDouble() - p0.x.toDouble()) / 6,
+        p1.y.toDouble() + (p2.y.toDouble() - p0.y.toDouble()) / 6,
+      );
+      final cp2 = Offset(
+        p2.x.toDouble() - (p3.x.toDouble() - p1.x.toDouble()) / 6,
+        p2.y.toDouble() - (p3.y.toDouble() - p1.y.toDouble()) / 6,
+      );
+
+      _path.cubicTo(
+        cp1.dx,
+        cp1.dy,
+        cp2.dx,
+        cp2.dy,
+        p2.x.toDouble(),
+        p2.y.toDouble(),
+      );
     }
+
+    _requiresNewPathCreation = false;
     return _path;
   }
-
-  /*Path _createPathAsBezier() {
-    // Each path that needs to be reconstructed as bezier path must set
-    // the bezierPath property to null.
-    Path bezierPath = Path();
-    if (_points.isEmpty) return bezierPath;
-
-    // Correct the bezierDistance to achieve best possible results. These values
-    // are empiric corrections.
-    int n = bezierDistance;
-    if (_points.length <= 7 && n > 2) n = 2;
-    if (_points.length <= 4) n = 1;
-
-    int index = 0;
-    bezierPath.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
-    if (_points.length > 3 * n) {
-      for (; index < _points.length - 3 * n; index += 3 * n) {
-        bezierPath.cubicTo(
-          _points[index + 1 * n].x.toDouble(),
-          _points[index + 1 * n].y.toDouble(),
-          _points[index + 2 * n].x.toDouble(),
-          _points[index + 2 * n].y.toDouble(),
-          _points[index + 3 * n].x.toDouble(),
-          _points[index + 3 * n].y.toDouble(),
-        );
-      }
-    }
-    if (_points.length - index > 2) {
-      bezierPath.quadraticBezierTo(
-        _points[_points.length - 2].x.toDouble(),
-        _points[_points.length - 2].y.toDouble(),
-        _points[_points.length - 1].x.toDouble(),
-        _points[_points.length - 1].y.toDouble(),
-      );
-    } else {
-      for (; index < _points.length; index++) {
-        bezierPath.lineTo(
-          _points[index].x.toDouble(),
-          _points[index].y.toDouble(),
-        );
-      }
-    }
-    return bezierPath;
-  }*/
 
   /// Calculate if this stroke intersects with a segment defined by start [ip1]
   /// and end [ip2] point.

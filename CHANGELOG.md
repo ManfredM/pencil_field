@@ -54,5 +54,11 @@
 * **IMPROVEMENT** More comprehensive example is provided
 
 ## 0.4.1
+
 * **IMPROVEMENT** Moved some functions from PencilDrawing to PencilStroke
+
+## 0.4.2
+* **IMPROVEMENT** Use bezier curve to draw PencilStroke
+
+
 

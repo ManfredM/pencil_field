@@ -33,6 +33,7 @@ test/image_output
 test/resulting_output
 example.md
 /test-results.json
+/test-results.txt
 
 
 
