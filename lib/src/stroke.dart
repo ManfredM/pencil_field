@@ -189,9 +189,11 @@ class PencilStroke {
   // smooth the line, a bezier curve is used.
   Path _createPathAsLine() {
     _path.reset();
+    _requiresNewPathCreation = false;
     if (_points.isEmpty) return _path;
 
     // Move to the first point
+    /*
     _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
 
     for (int i = 0; i < _points.length - 1; i++) {
@@ -217,9 +219,31 @@ class PencilStroke {
         p2.x.toDouble(),
         p2.y.toDouble(),
       );
+    }*/
+
+    _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
+    for (int i = 0; i < _points.length - 1; i++) {
+      final Offset startPoint = Offset(
+        _points[i].x.toDouble(),
+        _points[i].y.toDouble(),
+      );
+      final Offset endPoint = Offset(
+        _points[i + 1].x.toDouble(),
+        _points[i + 1].y.toDouble(),
+      );
+      final Offset midPoint = Offset(
+        (startPoint.dx + endPoint.dx) / 2,
+        (startPoint.dy + endPoint.dy) / 2,
+      );
+
+      _path.quadraticBezierTo(
+        startPoint.dx,
+        startPoint.dy,
+        midPoint.dx,
+        midPoint.dy,
+      );
     }
 
-    _requiresNewPathCreation = false;
     return _path;
   }
 

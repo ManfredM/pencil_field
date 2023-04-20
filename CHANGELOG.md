@@ -60,5 +60,5 @@
 ## 0.4.2
 * **IMPROVEMENT** Use bezier curve to draw PencilStroke
 
-
-
+## 0.4.3
+* **IMPROVEMENT** Instead of cubicTo quadraticBezierTo is used to achieve a smoother line
