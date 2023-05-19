@@ -1,5 +1,5 @@
 # Make sure everything is formatted properly
-flutter format .
+dart format .
 
 # run the tests before
 flutter test

@@ -62,3 +62,6 @@
 
 ## 0.4.3
 * **IMPROVEMENT** Instead of cubicTo quadraticBezierTo is used to achieve a smoother line
+
+## 0.4.4
+* **IMPROVEMENT** Updated to Dart 3.0
