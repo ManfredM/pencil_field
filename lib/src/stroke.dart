@@ -8,7 +8,7 @@ import 'paint.dart';
 
 /// This value controls the minimum distance required between points that a
 /// point is added using [addPointToLastStroke].
-const _kMinimumDistance = 0.5;
+const _kMinimumDistance = 0.1;
 
 class PencilStroke {
   PencilStroke({
@@ -190,37 +190,24 @@ class PencilStroke {
   Path _createPathAsLine() {
     _path.reset();
     _requiresNewPathCreation = false;
+
+    // First special case: No points
     if (_points.isEmpty) return _path;
 
-    // Move to the first point
-    /*
-    _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
-
-    for (int i = 0; i < _points.length - 1; i++) {
-      final p0 = i > 0 ? _points[i - 1] : _points[i];
-      final p1 = _points[i];
-      final p2 = _points[i + 1];
-      final p3 = i < _points.length - 2 ? _points[i + 2] : p2;
-
-      final cp1 = Offset(
-        p1.x.toDouble() + (p2.x.toDouble() - p0.x.toDouble()) / 6,
-        p1.y.toDouble() + (p2.y.toDouble() - p0.y.toDouble()) / 6,
+    // Second special case: Only one point
+    if (_points.length == 1) {
+      _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
+      _path.addOval(
+        Rect.fromCircle(
+          center: Offset(_points[0].x.toDouble(), _points[0].y.toDouble()),
+          radius: pencilPaint.paint.strokeWidth / 2,
+        ),
       );
-      final cp2 = Offset(
-        p2.x.toDouble() - (p3.x.toDouble() - p1.x.toDouble()) / 6,
-        p2.y.toDouble() - (p3.y.toDouble() - p1.y.toDouble()) / 6,
-      );
+      return _path;
+    }
 
-      _path.cubicTo(
-        cp1.dx,
-        cp1.dy,
-        cp2.dx,
-        cp2.dy,
-        p2.x.toDouble(),
-        p2.y.toDouble(),
-      );
-    }*/
-
+    // All other cases: At least two points, thus a quadratic bezier curve
+    // can be used to connect the points.
     _path.moveTo(_points[0].x.toDouble(), _points[0].y.toDouble());
     for (int i = 0; i < _points.length - 1; i++) {
       final Offset startPoint = Offset(

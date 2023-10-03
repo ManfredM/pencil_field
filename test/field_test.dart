@@ -137,7 +137,7 @@ void main() {
           controller.drawingAsImage(backgroundColor: Colors.white);
 
       await tester.runAsync<void>(
-        additionalTime: const Duration(seconds: 5),
+        //additionalTime: const Duration(seconds: 5),
         () async {
           final imageAsPNG = await resultHelloImage.toPNG();
           writeImage('test/resulting_output/hello.png', imageAsPNG!);

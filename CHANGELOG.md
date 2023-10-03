@@ -58,10 +58,17 @@
 * **IMPROVEMENT** Moved some functions from PencilDrawing to PencilStroke
 
 ## 0.4.2
+
 * **IMPROVEMENT** Use bezier curve to draw PencilStroke
 
 ## 0.4.3
+
 * **IMPROVEMENT** Instead of cubicTo quadraticBezierTo is used to achieve a smoother line
 
 ## 0.4.4
+
 * **IMPROVEMENT** Updated to Dart 3.0
+
+## 0.4.5
+
+* **IMPROVEMENT** Decreased the minumim distance of a point to be added to 0.1 from 0.5. The larger number prevented some points that should have been added from being added.
