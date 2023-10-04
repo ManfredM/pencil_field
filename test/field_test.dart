@@ -93,7 +93,8 @@ void main() {
 
     testWidgets(
         'Write the word "Hallo" and compare the outcome with a '
-        'reference picture that is stored on disk.',
+        'reference picture that is stored on disk. The picture must also '
+        'include a single dot in the upper left corner.',
         (WidgetTester tester) async {
       final controller = PencilFieldController();
 
@@ -130,6 +131,16 @@ void main() {
           );
         }
         await drawGesture.up();
+        await tester.pumpAndSettle();
+
+        // Add a single point to the drawing
+        final singlePointGesture = await tester.startGesture(
+          Offset(
+            givenPoint1.x.toDouble(),
+            givenPoint1.y.toDouble(),
+          ),
+        );
+        await singlePointGesture.up();
         await tester.pumpAndSettle();
       }
 

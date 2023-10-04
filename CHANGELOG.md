@@ -72,3 +72,7 @@
 ## 0.4.5
 
 * **IMPROVEMENT** Decreased the minumim distance of a point to be added to 0.1 from 0.5. The larger number prevented some points that should have been added from being added.
+
+## 0.4.6
+
+* **FIX** Strokes that only have a single point are shown correctly.

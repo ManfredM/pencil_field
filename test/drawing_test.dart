@@ -82,6 +82,32 @@ void main() {
   group('Test PencilDrawing stroke handling', () {
     final strokeAndPointTests = <PencilDrawingTest>[
       PencilDrawingTest(
+        name: 'Add single point to drawing',
+        givenPoints: [givenPoint1],
+        givenPaint: PencilPaint(color: Colors.black, strokeWidth: 2.0),
+        givenBezierDistance: 1,
+        expectedStrokeCount: 1,
+        runner: (strokeAndPointTest) {
+          final result = PencilDrawing();
+          result.addStroke(
+            stroke: PencilStroke(
+              points: strokeAndPointTest.givenPoints!,
+              bezierDistance: strokeAndPointTest.givenBezierDistance!,
+              pencilPaint: strokeAndPointTest.givenPaint!,
+            ),
+          );
+          expect(result.strokeCount, strokeAndPointTest.expectedStrokeCount);
+          expect(
+            result.lastStroke.pointCount,
+            strokeAndPointTest.givenPoints!.length,
+          );
+          expect(
+            result.strokeAt(0).pointCount,
+            strokeAndPointTest.givenPoints!.length,
+          );
+        },
+      ),
+      PencilDrawingTest(
         name: 'Add stroke to drawing',
         givenPoints: [givenPoint1, givenPoint2, givenPoint3, givenPoint4],
         givenPaint: PencilPaint(color: Colors.black, strokeWidth: 2.0),
