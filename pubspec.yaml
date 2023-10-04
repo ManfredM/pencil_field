@@ -1,7 +1,7 @@
 name: pencil_field
 description: Pencil / stylus interaction (writing & erasing) on different devices and platforms.
   Comes with versioned persistence of input.
-version: 0.4.6
+version: 0.4.7
 homepage: https://github.com/ManfredM/pencil_field
 
 environment:

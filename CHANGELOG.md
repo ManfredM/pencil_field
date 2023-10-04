@@ -76,3 +76,7 @@
 ## 0.4.6
 
 * **FIX** Strokes that only have a single point are shown correctly.
+
+## 0.4.7
+
+* **FIX** Reduced diameter of the dot to match line width.

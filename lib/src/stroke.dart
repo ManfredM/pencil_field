@@ -200,7 +200,7 @@ class PencilStroke {
       _path.addOval(
         Rect.fromCircle(
           center: Offset(_points[0].x.toDouble(), _points[0].y.toDouble()),
-          radius: pencilPaint.paint.strokeWidth / 2,
+          radius: pencilPaint.paint.strokeWidth / 4,
         ),
       );
       return _path;
