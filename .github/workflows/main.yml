@@ -16,13 +16,13 @@ jobs:
     - name: Analyze the Dart code
       run: dart analyze
 
-    - name: run 35 unit tests and check if all test pass
+    - name: run 36 unit tests and check if all test pass
       run: |
         mkdir test/resulting_output
         flutter test > test-results.txt
         ls $GITHUB_WORKSPACE
         cat $GITHUB_WORKSPACE/test-results.txt
-        if [ "$(grep -c '35 tests passed.' $GITHUB_WORKSPACE/test-results.txt)" -ne 1 ]; then
+        if [ "$(grep -c '36 tests passed.' $GITHUB_WORKSPACE/test-results.txt)" -ne 1 ]; then
           echo "One or more tests failed. Please fix the failing tests and try again."
           exit 1
         fi
