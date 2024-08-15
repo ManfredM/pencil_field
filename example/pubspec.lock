@@ -66,10 +66,10 @@ packages:
     dependency: "direct dev"
     description:
       name: flutter_lints
-      sha256: a25a15ebbdfc33ab1cd26c63a6ee519df92338a9c10f122adda92938253bef04
+      sha256: "3f41d009ba7172d5ff9be5f6e6e6abb4300e263aab8866d2a0842ed2a70f8f0c"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.3"
+    version: "4.0.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -103,18 +103,18 @@ packages:
     dependency: "direct main"
     description:
       name: line_awesome_flutter
-      sha256: "7e1beb342895d7da40d40047d193f8ecfd494355b399dc3d92912c31ccc4d808"
+      sha256: "24cef0a34816ffed9846f1793172333be50dc29678d499893b3cb38d3c53db24"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "3.0.1"
   lints:
     dependency: transitive
     description:
       name: lints
-      sha256: "0a217c6c989d21039f1498c3ed9f3ed71b354e69873f13a8dfc3c9fe76f1b452"
+      sha256: "976c774dd944a42e83e2467f4cc670daef7eed6295b10b36ae8c85bcbf828235"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.1"
+    version: "4.0.0"
   matcher:
     dependency: transitive
     description:
@@ -153,23 +153,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.4.7"
-  pencil_kit:
-    dependency: "direct main"
-    description:
-      name: pencil_kit
-      sha256: f02df374e2cd81964544b53b6b6347caa5925959c6a6511b82634bcb14b51399
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.8"
-  plugin_platform_interface:
-    dependency: transitive
-    description:
-      name: plugin_platform_interface
-      sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.8"
+    version: "0.4.8"
   sky_engine:
     dependency: transitive
     description: flutter
