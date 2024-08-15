@@ -80,3 +80,7 @@
 ## 0.4.7
 
 * **FIX** Reduced diameter of the dot to match line width.
+
+## 0.4.8
+
+* **FIX** Fixed failing tests after update to Flutter 3.24.0 and Dart 3.5
