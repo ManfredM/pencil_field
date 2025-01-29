@@ -176,7 +176,7 @@ class PencilFieldController {
       if (_mode == PencilMode.erase) {
         if (_writePathsMarkedForErase[index]) {
           paint = PencilPaint(
-            color: paint.color.withAlpha(paint.color.alpha ~/ 2),
+            color: paint.color.withAlpha(paint.color.a ~/ 2),
             strokeWidth: paint.strokeWidth,
           ).paint;
         }

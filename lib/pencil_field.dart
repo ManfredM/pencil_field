@@ -1,4 +1,4 @@
-library pencil;
+library;
 
 export 'src/drawing.dart';
 export 'src/field.dart';

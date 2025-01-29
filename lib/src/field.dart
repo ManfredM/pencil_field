@@ -1,4 +1,4 @@
-library pencil_field;
+library;
 
 import 'dart:ui';
 

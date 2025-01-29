@@ -1,7 +1,7 @@
 name: pencil_field
 description: Pencil / stylus interaction (writing & erasing) on different devices and platforms.
   Comes with versioned persistence of input.
-version: 0.4.8
+version: 0.4.9
 homepage: https://github.com/ManfredM/pencil_field
 
 environment:
@@ -15,15 +15,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.1
+  flutter_lints: ^5.0.0
 
-# The following section is specific to Flutter packages.
-flutter:
-  plugin:
-    platforms:
-      android:
-        default_package: pencil_field
-      ios:
-        default_package: pencil_field
-      web:
-        default_package: pencil_field
+
+

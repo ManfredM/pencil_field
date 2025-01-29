@@ -84,3 +84,7 @@
 ## 0.4.8
 
 * **FIX** Fixed failing tests after update to Flutter 3.24.0 and Dart 3.5
+
+## 0.4.9
+
+* **FIX** Fixed warnings

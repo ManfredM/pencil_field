@@ -59,8 +59,10 @@ void main() {
         expect(controller.drawing.strokeCount, widgetTest.expectedStrokes);
         if (widgetTest.expectedStrokes > 0) {
           expect(
-            controller.drawing.lastStroke.pencilPaint.paint.color.value,
-            Colors.green.value,
+            PencilPaint.colorToInt(
+              controller.drawing.lastStroke.pencilPaint.paint.color,
+            ),
+            PencilPaint.colorToInt(Colors.green),
           );
         }
 
