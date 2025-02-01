@@ -88,3 +88,8 @@
 ## 0.4.9
 
 * **FIX** Fixed warnings
+
+## 0.4.10
+
+* **FIX** Requires Flutter 3.27.3 or higher
+  
