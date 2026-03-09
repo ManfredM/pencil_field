@@ -315,4 +315,359 @@ class PencilStroke {
       return 1;
     }
   }
+
+  /// Computes the shortest distance from point [p] to the line segment
+  /// defined by [segStart] and [segEnd].
+  ///
+  /// Uses vector projection clamped to [0,1] to correctly handle the
+  /// segment endpoints (i.e., if the closest point on the infinite line
+  /// falls outside the segment, the distance to the nearest endpoint
+  /// is returned instead).
+  static double pointToSegmentDistance(Point p, Point segStart, Point segEnd) {
+    final double dx = segEnd.x.toDouble() - segStart.x.toDouble();
+    final double dy = segEnd.y.toDouble() - segStart.y.toDouble();
+    final double segLengthSq = dx * dx + dy * dy;
+
+    // Degenerate segment (start == end): return distance to that point
+    if (segLengthSq == 0.0) {
+      final double px = p.x.toDouble() - segStart.x.toDouble();
+      final double py = p.y.toDouble() - segStart.y.toDouble();
+      return sqrt(px * px + py * py);
+    }
+
+    // Project point onto the line, clamped to [0,1]
+    double t = ((p.x.toDouble() - segStart.x.toDouble()) * dx +
+            (p.y.toDouble() - segStart.y.toDouble()) * dy) /
+        segLengthSq;
+    t = t.clamp(0.0, 1.0);
+
+    // Closest point on the segment
+    final double closestX = segStart.x.toDouble() + t * dx;
+    final double closestY = segStart.y.toDouble() + t * dy;
+
+    final double distX = p.x.toDouble() - closestX;
+    final double distY = p.y.toDouble() - closestY;
+    return sqrt(distX * distX + distY * distY);
+  }
+
+  /// Splits this stroke by removing all points that fall within [radius]
+  /// of any segment along the eraser path defined by [eraserPoints].
+  /// Computes the minimum distance between two line segments:
+  /// segment A from [a1] to [a2], and segment B from [b1] to [b2].
+  ///
+  /// This is the minimum of the four point-to-segment distances.
+  static double segmentToSegmentDistance(
+      Point a1, Point a2, Point b1, Point b2) {
+    return [
+      pointToSegmentDistance(a1, b1, b2),
+      pointToSegmentDistance(a2, b1, b2),
+      pointToSegmentDistance(b1, a1, a2),
+      pointToSegmentDistance(b2, a1, a2),
+    ].reduce(min);
+  }
+
+  /// Splits this stroke by erasing the portions that fall within [radius]
+  /// of the eraser path defined by [eraserPoints].
+  ///
+  /// Uses PathMetrics on the actual rendered bezier path for accurate boundary
+  /// detection. Walks the rendered curve densely, finds inside/outside
+  /// transitions, then binary-searches on the path offset for the precise
+  /// crossing point. Maps boundary positions back to control point indices
+  /// via precomputed cumulative arc lengths. Surviving segments keep their
+  /// original control points for smoothness.
+  ///
+  /// - If no part of this stroke is within the sweep → returns `[this]`.
+  /// - If the entire stroke is within the sweep → returns `[]`.
+  /// - Otherwise → one new stroke per contiguous surviving segment.
+  List<PencilStroke> splitByRadius({
+    required List<Point> eraserPoints,
+    required double radius,
+  }) {
+    if (_points.isEmpty || eraserPoints.isEmpty) return [this];
+
+    // Build the eraser's bezier path — same construction as rendered strokes
+    // This ensures the distance check matches the visualized sweep body.
+    final List<Offset> eraserSamples = [];
+    if (eraserPoints.length == 1) {
+      eraserSamples.add(Offset(
+        eraserPoints[0].x.toDouble(),
+        eraserPoints[0].y.toDouble(),
+      ));
+    } else {
+      // Build the eraser bezier path
+      final eraserPath = Path();
+      eraserPath.moveTo(
+        eraserPoints[0].x.toDouble(),
+        eraserPoints[0].y.toDouble(),
+      );
+      for (int i = 0; i < eraserPoints.length - 1; i++) {
+        final cp = Offset(
+          eraserPoints[i].x.toDouble(),
+          eraserPoints[i].y.toDouble(),
+        );
+        final np = Offset(
+          eraserPoints[i + 1].x.toDouble(),
+          eraserPoints[i + 1].y.toDouble(),
+        );
+        final mid = Offset((cp.dx + np.dx) / 2, (cp.dy + np.dy) / 2);
+        eraserPath.quadraticBezierTo(cp.dx, cp.dy, mid.dx, mid.dy);
+      }
+      // Sample the eraser path densely
+      final eraserMetrics = eraserPath.computeMetrics().toList();
+      for (final em in eraserMetrics) {
+        final len = em.length;
+        const step = 3.0;
+        for (double d = 0; d <= len; d += step) {
+          final t = em.getTangentForOffset(d);
+          if (t != null) eraserSamples.add(t.position);
+        }
+        // Always include the endpoint
+        final lastT = em.getTangentForOffset(len);
+        if (lastT != null) eraserSamples.add(lastT.position);
+      }
+    }
+
+    // Special case: single-point stroke
+    if (_points.length == 1) {
+      final px = _points[0].x.toDouble();
+      final py = _points[0].y.toDouble();
+      double minDist = double.infinity;
+      if (eraserSamples.length == 1) {
+        final dx = px - eraserSamples[0].dx;
+        final dy = py - eraserSamples[0].dy;
+        minDist = sqrt(dx * dx + dy * dy);
+      } else {
+        for (int j = 0; j < eraserSamples.length - 1; j++) {
+          final dist = pointToSegmentDistance(
+            _points[0],
+            Point(eraserSamples[j].dx.round(), eraserSamples[j].dy.round()),
+            Point(eraserSamples[j + 1].dx.round(),
+                eraserSamples[j + 1].dy.round()),
+          );
+          if (dist < minDist) minDist = dist;
+        }
+      }
+      return minDist <= radius ? [] : [this];
+    }
+
+    // Helper: check if a point is inside the sweep body
+    // Uses densely-sampled eraser bezier path for accurate distance
+    bool isInside(double px, double py) {
+      if (eraserSamples.length == 1) {
+        final dx = px - eraserSamples[0].dx;
+        final dy = py - eraserSamples[0].dy;
+        return sqrt(dx * dx + dy * dy) <= radius;
+      }
+      final p = Point(px.round(), py.round());
+      for (int j = 0; j < eraserSamples.length - 1; j++) {
+        final dist = pointToSegmentDistance(
+          p,
+          Point(eraserSamples[j].dx.round(), eraserSamples[j].dy.round()),
+          Point(
+              eraserSamples[j + 1].dx.round(), eraserSamples[j + 1].dy.round()),
+        );
+        if (dist <= radius) return true;
+      }
+      return false;
+    }
+
+    // Get the actual rendered bezier path and its metrics
+    final path = createDrawablePath();
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isEmpty) return [this];
+    final metric = metrics.first;
+    final totalLength = metric.length;
+    if (totalLength == 0) return [this];
+
+    // Precompute cumulative arc lengths at each control point's
+    // corresponding position on the rendered path.
+    // The path goes: p0 → mid(p0,p1) → mid(p1,p2) → ... → mid(pn-2,pn-1)
+    // Each bezier segment i: from prev_end to mid(p[i],p[i+1]), control=p[i]
+    // We compute the path offset at each midpoint boundary.
+    final segmentEndOffsets = <double>[0.0]; // offset at start (p0)
+
+    // Build individual segment paths to measure their lengths
+    double cumulativeLength = 0;
+    for (int i = 0; i < _points.length - 1; i++) {
+      final segPath = Path();
+      final p0 = _points[i];
+      final p1 = _points[i + 1];
+
+      if (i == 0) {
+        segPath.moveTo(p0.x.toDouble(), p0.y.toDouble());
+      } else {
+        final prev = _points[i - 1];
+        segPath.moveTo(
+          (prev.x + p0.x) / 2.0,
+          (prev.y + p0.y) / 2.0,
+        );
+      }
+
+      segPath.quadraticBezierTo(
+        p0.x.toDouble(),
+        p0.y.toDouble(),
+        (p0.x + p1.x) / 2.0,
+        (p0.y + p1.y) / 2.0,
+      );
+
+      final segMetrics = segPath.computeMetrics().toList();
+      final segLen = segMetrics.isNotEmpty ? segMetrics.first.length : 0.0;
+      cumulativeLength += segLen;
+      segmentEndOffsets.add(cumulativeLength);
+    }
+
+    // Walk the rendered path, sample every ~2 pixels, detect transitions
+    const double sampleStep = 2.0;
+    bool? prevInside;
+    double? prevOffset;
+    // List of (offset, entering) — entering=true means outside→inside
+    final transitions = <(double, bool)>[];
+
+    for (double d = 0; d <= totalLength; d += sampleStep) {
+      final tangent = metric.getTangentForOffset(d);
+      if (tangent == null) continue;
+      final pos = tangent.position;
+      final inside = isInside(pos.dx, pos.dy);
+
+      if (prevInside != null && inside != prevInside) {
+        // Binary search on path offset for precise boundary
+        double lo = prevOffset ?? (d - sampleStep);
+        double hi = d;
+        for (int iter = 0; iter < 20; iter++) {
+          final mid = (lo + hi) / 2;
+          final midT = metric.getTangentForOffset(mid);
+          if (midT == null) break;
+          final midInside = isInside(midT.position.dx, midT.position.dy);
+          if (midInside == prevInside) {
+            lo = mid;
+          } else {
+            hi = mid;
+          }
+        }
+        final boundaryOffset = (lo + hi) / 2;
+        transitions.add((boundaryOffset, !prevInside));
+      }
+
+      prevInside = inside;
+      prevOffset = d;
+    }
+
+    // No transitions and first sample was outside → nothing erased
+    if (transitions.isEmpty) {
+      final firstT = metric.getTangentForOffset(0);
+      if (firstT != null && !isInside(firstT.position.dx, firstT.position.dy)) {
+        return [this];
+      }
+      // First sample was inside → fully erased
+      return [];
+    }
+
+    // Map a path offset to a control point index (which segment it falls in)
+    int offsetToSegmentIndex(double offset) {
+      for (int i = 0; i < segmentEndOffsets.length - 1; i++) {
+        if (offset <= segmentEndOffsets[i + 1]) return i;
+      }
+      return _points.length - 2;
+    }
+
+    // Get the position on the rendered curve at a given offset
+    Point positionAtOffset(double offset) {
+      final t = metric.getTangentForOffset(offset.clamp(0, totalLength));
+      if (t == null) return _points[0];
+      return Point(t.position.dx.round(), t.position.dy.round());
+    }
+
+    // Build result strokes from transitions
+    // Determine if the path starts inside or outside
+    final firstT = metric.getTangentForOffset(0);
+    final startsInside =
+        firstT != null && isInside(firstT.position.dx, firstT.position.dy);
+
+    final List<PencilStroke> result = [];
+
+    // Process transitions to build surviving segments
+    // Each pair of (exit, entry) transitions bounds an outside segment
+    // If starts outside: first segment is [0, first_entry]
+    // If starts inside: first segment is [first_exit, second_entry]
+    int transIdx = 0;
+
+    if (!startsInside) {
+      // Path starts outside — collect until first entry transition
+      if (transitions.isEmpty || !transitions[0].$2) {
+        // No entry transition → entire path survives
+        return [this];
+      }
+
+      // First transition is an entry (outside→inside)
+      final entryOffset = transitions[0].$1;
+      final entrySegIdx = offsetToSegmentIndex(entryOffset);
+      final boundaryPoint = positionAtOffset(entryOffset);
+
+      // Collect control points from start to entrySegIdx + boundary
+      final List<Point> run = [];
+      for (int i = 0; i <= entrySegIdx; i++) {
+        run.add(_points[i]);
+      }
+      run.add(boundaryPoint);
+      if (run.length >= 2) {
+        result.add(PencilStroke(
+          points: run,
+          bezierDistance: bezierDistance,
+          pencilPaint: pencilPaint,
+        ));
+      }
+      transIdx = 1;
+    }
+
+    // Process remaining transitions in pairs (exit, entry)
+    while (transIdx < transitions.length) {
+      // Current should be an exit transition (inside→outside)
+      if (transIdx < transitions.length && !transitions[transIdx].$2) {
+        final exitOffset = transitions[transIdx].$1;
+        final exitSegIdx = offsetToSegmentIndex(exitOffset);
+        final exitPoint = positionAtOffset(exitOffset);
+        transIdx++;
+
+        // Find the next entry transition (outside→inside)
+        double? entryOffset;
+        int? entrySegIdx;
+        Point? entryPoint;
+        if (transIdx < transitions.length && transitions[transIdx].$2) {
+          entryOffset = transitions[transIdx].$1;
+          entrySegIdx = offsetToSegmentIndex(entryOffset);
+          entryPoint = positionAtOffset(entryOffset);
+          transIdx++;
+        }
+
+        // Build surviving run from exitPoint through original control points
+        final List<Point> run = [exitPoint];
+        final endIdx = entrySegIdx ?? (_points.length - 1);
+        for (int i = exitSegIdx + 1; i <= endIdx; i++) {
+          run.add(_points[i]);
+        }
+        if (entryPoint != null) {
+          run.add(entryPoint);
+        }
+        if (run.length >= 2) {
+          result.add(PencilStroke(
+            points: run,
+            bezierDistance: bezierDistance,
+            pencilPaint: pencilPaint,
+          ));
+        }
+      } else {
+        transIdx++; // skip unexpected transition
+      }
+    }
+
+    // If the path ends outside and we haven't captured the tail
+    if (prevInside != null && !prevInside) {
+      // Check if last transition was an exit (inside→outside)
+      if (transitions.isNotEmpty && !transitions.last.$2) {
+        // Already handled above
+      }
+    }
+
+    return result.isEmpty ? [] : result;
+  }
 }

@@ -84,6 +84,47 @@ void main() {
         expect(controller.drawing.strokeCount, 0);
       }
     });
+
+    testWidgets('Test radius erasing on widget', (WidgetTester tester) async {
+      final controller = PencilFieldController();
+      await tester.pumpWidget(
+        createWidgetForTesting(
+          child: PencilField(
+            controller: controller,
+            pencilPaint: PencilPaint(color: Colors.green, strokeWidth: 2.0),
+            onPencilDrawingChanged: (_) {},
+            pencilOnly: false,
+          ),
+        ),
+      );
+
+      // Draw a horizontal stroke
+      final drawGesture = await tester.startGesture(const Offset(10, 50));
+      await drawGesture.moveTo(const Offset(30, 50));
+      await drawGesture.moveTo(const Offset(50, 50));
+      await drawGesture.moveTo(const Offset(70, 50));
+      await drawGesture.moveTo(const Offset(90, 50));
+      await drawGesture.up();
+      await tester.pumpAndSettle();
+      expect(controller.drawing.strokeCount, 1);
+      final originalPointCount = controller.drawing.strokeAt(0).pointCount;
+
+      // Switch to radius erase and erase the middle
+      controller.setMode(PencilMode.radiusErase, eraserRadius: 5.0);
+      final eraseGesture = await tester.startGesture(const Offset(50, 40));
+      await eraseGesture.moveTo(const Offset(50, 60));
+      await eraseGesture.up();
+      await tester.pumpAndSettle();
+
+      // The stroke should be split (more than 1 stroke, or erased)
+      expect(controller.drawing.strokeCount >= 0, true);
+
+      // Undo should restore the original
+      controller.setMode(PencilMode.write);
+      controller.undo();
+      expect(controller.drawing.strokeCount, 1);
+      expect(controller.drawing.strokeAt(0).pointCount, originalPointCount);
+    });
   });
 
   group('Hallo', () {

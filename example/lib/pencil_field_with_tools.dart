@@ -4,7 +4,7 @@ import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:pencil_field/pencil_field.dart';
 
 /// PencilFieldWithTools supports the following modes
-enum _PencilToolType { pen, marker, eraser, undo, clear }
+enum _PencilToolType { pen, marker, eraser, radiusEraser, undo, clear }
 
 /// [PencilFieldWithTools] provides a complete input field with different
 /// tools based on the raw [PencilField].
@@ -46,6 +46,13 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
         case _PencilToolType.eraser:
           widget.controller.setMode(PencilMode.erase);
           pencilPaint = eraserPaint;
+          break;
+        case _PencilToolType.radiusEraser:
+          widget.controller.setMode(PencilMode.radiusErase, eraserRadius: 15.0);
+          pencilPaint = PencilPaint(
+            color: Colors.orange[300]!,
+            strokeWidth: 2.0,
+          );
           break;
         case _PencilToolType.clear:
           widget.controller.setDrawing(PencilDrawing(strokes: []));
@@ -201,6 +208,15 @@ class _PencilFieldTools extends StatelessWidget {
               currentPaint: currentPaint,
             ),
             _ToolSelectorButton(
+              type: _PencilToolType.radiusEraser,
+              pencilPaint: PencilPaint(
+                color: Colors.orange[300]!,
+                strokeWidth: 2.0,
+              ),
+              onToolSelected: onToolSelected,
+              currentPaint: currentPaint,
+            ),
+            _ToolSelectorButton(
               type: _PencilToolType.undo,
               pencilPaint: eraserPaint,
               onToolSelected: onToolSelected,
@@ -237,6 +253,9 @@ class _ToolSelectorButton extends StatelessWidget {
         break;
       case _PencilToolType.eraser:
         icon = const Icon(LineAwesomeIcons.eraser_solid);
+        break;
+      case _PencilToolType.radiusEraser:
+        icon = const Icon(Icons.radio_button_unchecked);
         break;
       case _PencilToolType.clear:
         icon = const Icon(LineAwesomeIcons.trash_solid);

@@ -5,8 +5,25 @@ import 'dart:ui';
 import 'package:flutter/rendering.dart';
 import 'package:pencil_field/pencil_field.dart';
 
-/// The pencil can work in two different modes, either draw something or erase
-enum PencilMode { write, erase }
+/// The pencil can work in different modes: draw, erase by line intersection,
+/// or erase by radius sweep.
+enum PencilMode { write, erase, radiusErase }
+
+/// Sealed class for undo actions, supporting both single-stroke restore
+/// (line-intersection erase) and full drawing snapshots (radius erase).
+sealed class PencilUndoAction {}
+
+/// Restoring a single deleted stroke (used by line-intersection erase).
+class UndoStrokeRestore extends PencilUndoAction {
+  final PencilStroke stroke;
+  UndoStrokeRestore(this.stroke);
+}
+
+/// Restoring the entire drawing snapshot (used by radius erase).
+class UndoDrawingSnapshot extends PencilUndoAction {
+  final PencilDrawing drawing;
+  UndoDrawingSnapshot(this.drawing);
+}
 
 class PencilFieldController {
   PencilMode _mode = PencilMode.write;
@@ -19,9 +36,16 @@ class PencilFieldController {
   List<bool> _writePathsMarkedForErase = <bool>[];
   PencilStroke? _eraserStroke;
   bool _atLeastOnePathMarkedForErase = false;
-  PencilDrawing _undoStrokes = PencilDrawing(strokes: <PencilStroke>[]);
+  final List<PencilUndoAction> _undoActions = [];
+
+  // Radius erase state
+  double _eraserRadius = 10.0;
+  PencilDrawing? _preRadiusEraseSnapshot;
 
   PencilDrawing get drawing => _drawing;
+
+  /// Returns the current eraser radius for the radius erase mode.
+  double get eraserRadius => _eraserRadius;
 
   /// Set the initial strokes of the drawing. For example, this can be used for
   /// automatically generated paths. This sets the mode to writing.
@@ -31,7 +55,7 @@ class PencilFieldController {
     _atLeastOnePathMarkedForErase = false;
   }
 
-  void setMode(PencilMode mode) {
+  void setMode(PencilMode mode, {double? eraserRadius}) {
     // Avoid unnecessary calls
     if (_mode == mode) return;
 
@@ -41,9 +65,24 @@ class PencilFieldController {
         _removeWritePathsMarkedForErase();
         break;
       case PencilMode.erase:
-        _writePathsMarkedForErase =
-            List.generate(_drawing.strokeCount, (index) => false);
+        _writePathsMarkedForErase = List.generate(
+          _drawing.strokeCount,
+          (index) => false,
+        );
         _atLeastOnePathMarkedForErase = false;
+      case PencilMode.radiusErase:
+        if (eraserRadius != null) {
+          assert(() {
+            if (eraserRadius <= 0) {
+              debugPrint('Eraser radius must be positive.');
+              return false;
+            }
+            return true;
+          }());
+          _eraserRadius = eraserRadius;
+        }
+        _eraserStroke = null;
+        _preRadiusEraseSnapshot = null;
     }
   }
 
@@ -56,19 +95,23 @@ class PencilFieldController {
     required PencilPaint pencilPaint,
   }) {
     final pencilStroke = PencilStroke(
-        points: [Point(startOffset.dx, startOffset.dy)],
-        bezierDistance: PencilStroke.defaultBezierDistance(),
-        pencilPaint: pencilPaint);
+      points: [Point(startOffset.dx, startOffset.dy)],
+      bezierDistance: PencilStroke.defaultBezierDistance(),
+      pencilPaint: pencilPaint,
+    );
     if (_mode == PencilMode.write) {
-      //_drawing = _drawing.add(pencilStroke);
       _drawing.addStroke(stroke: pencilStroke);
+    } else if (_mode == PencilMode.radiusErase) {
+      _eraserStroke = pencilStroke;
+      // Snapshot the drawing before this erase gesture for undo
+      _preRadiusEraseSnapshot = PencilDrawing.from(pencilDrawing: _drawing);
     } else {
       _eraserStroke = pencilStroke;
     }
   }
 
   /// Add the next point. If working in eraser mode all paths will be
-  /// immediately tested for intersection.
+  /// immediately tested for intersection or radius-based erasure.
   void addPointToPath(Offset offset) {
     switch (_mode) {
       case PencilMode.write:
@@ -77,6 +120,10 @@ class PencilFieldController {
       case PencilMode.erase:
         _eraserStroke?.addPoint(Point(offset.dx, offset.dy));
         _calculateIntersections();
+        break;
+      case PencilMode.radiusErase:
+        _eraserStroke?.addPoint(Point(offset.dx, offset.dy));
+        _applyRadiusSweep();
         break;
     }
   }
@@ -87,7 +134,40 @@ class PencilFieldController {
       // In case of erase mode all paths marked for erase will be removed
       // from the writing paths.
       _removeWritePathsMarkedForErase();
+    } else if (_mode == PencilMode.radiusErase) {
+      // Push the pre-erase snapshot for undo
+      if (_preRadiusEraseSnapshot != null) {
+        _undoActions.add(UndoDrawingSnapshot(_preRadiusEraseSnapshot!));
+        _preRadiusEraseSnapshot = null;
+      }
+      _eraserStroke = null;
     }
+  }
+
+  /// Apply the radius-based sweep to erase stroke points within the
+  /// eraser radius of the current eraser path.
+  void _applyRadiusSweep() {
+    if (_eraserStroke == null || _eraserStroke!.pointCount == 0) return;
+
+    // Collect all eraser path points
+    final eraserPoints = <Point>[];
+    for (int i = 0; i < _eraserStroke!.pointCount; i++) {
+      eraserPoints.add(_eraserStroke!.pointAt(i));
+    }
+
+    // Apply splitByRadius to each stroke and collect the results
+    final newStrokes = <PencilStroke>[];
+    for (int i = 0; i < _drawing.strokeCount; i++) {
+      final stroke = _drawing.strokeAt(i);
+      final splitResult = stroke.splitByRadius(
+        eraserPoints: eraserPoints,
+        radius: _eraserRadius,
+      );
+      newStrokes.addAll(splitResult);
+    }
+
+    // Replace the drawing with the new set of strokes
+    _drawing = PencilDrawing(strokes: newStrokes);
   }
 
   void _calculateIntersections() {
@@ -131,8 +211,7 @@ class PencilFieldController {
           reverseIndex--) {
         if (_writePathsMarkedForErase[reverseIndex]) {
           PencilStroke deletedStroke = _drawing.removeStrokeAt(reverseIndex);
-          //_undoStrokes = _undoStrokes.add(deletedStroke);
-          _undoStrokes.addStroke(stroke: deletedStroke);
+          _undoActions.add(UndoStrokeRestore(deletedStroke));
         }
       }
       _writePathsMarkedForErase = List.generate(
@@ -145,21 +224,25 @@ class PencilFieldController {
   }
 
   void undo() {
-    if (_undoStrokes.strokeCount == 0) return;
+    if (_undoActions.isEmpty) return;
 
-    // Move the last deleted stroke back to the list of strokes
-    //_drawing = _drawing.add(_undoStrokes.lastStroke);
-    _drawing.addStroke(stroke: _undoStrokes.lastStroke);
-    _undoStrokes.removeLastStroke();
-
-    // Add an additional entry to the list of markers.
-    _writePathsMarkedForErase.add(false);
+    final lastAction = _undoActions.removeLast();
+    switch (lastAction) {
+      case UndoStrokeRestore(:final stroke):
+        // Move the last deleted stroke back to the list of strokes
+        _drawing.addStroke(stroke: stroke);
+        // Add an additional entry to the list of markers.
+        _writePathsMarkedForErase.add(false);
+      case UndoDrawingSnapshot(:final drawing):
+        // Restore the entire drawing from the snapshot
+        _drawing = PencilDrawing.from(pencilDrawing: drawing);
+    }
   }
 
   void clear() {
     _mode = PencilMode.write;
     _drawing = PencilDrawing(strokes: <PencilStroke>[]);
-    _undoStrokes = PencilDrawing(strokes: <PencilStroke>[]);
+    _undoActions.clear();
     _eraserStroke = null;
   }
 
@@ -187,12 +270,68 @@ class PencilFieldController {
     }
     if (_eraserStroke != null) {
       if (_eraserStroke!.pointCount > 0) {
-        canvas.drawPath(
-          _eraserStroke!.createDrawablePath(),
-          _eraserStroke!.pencilPaint.paint,
-        );
+        if (_mode == PencilMode.radiusErase) {
+          // Render the sweep body polygon
+          _drawSweepBodyPolygon(canvas);
+        } else {
+          // Existing eraser stroke rendering for line-intersection erase
+          canvas.drawPath(
+            _eraserStroke!.createDrawablePath(),
+            _eraserStroke!.pencilPaint.paint,
+          );
+        }
       }
     }
+  }
+
+  /// Renders the sweep body as the eraser path drawn with a thick
+  /// round-capped stroke (width = 2 × radius). This automatically produces
+  /// the correct capsule/stadium shapes with filled circular end caps.
+  void _drawSweepBodyPolygon(Canvas canvas) {
+    if (_eraserStroke == null || _eraserStroke!.pointCount == 0) return;
+
+    final sweepFill = Paint()
+      ..color = const Color.fromRGBO(255, 165, 0, 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _eraserRadius * 2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final sweepBorder = Paint()
+      ..color = const Color.fromRGBO(200, 130, 0, 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _eraserRadius * 2 + 1.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Single point: draw a filled circle
+    if (_eraserStroke!.pointCount == 1) {
+      final p = _eraserStroke!.pointAt(0);
+      final center = Offset(p.x.toDouble(), p.y.toDouble());
+      canvas.drawCircle(
+        center,
+        _eraserRadius,
+        Paint()
+          ..color = const Color.fromRGBO(128, 128, 128, 0.5)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        center,
+        _eraserRadius,
+        Paint()
+          ..color = const Color.fromRGBO(100, 100, 100, 0.7)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
+      return;
+    }
+
+    // Multiple points: draw the eraser path as a thick round-capped stroke
+    final path = _eraserStroke!.createDrawablePath();
+
+    // Draw the border first (slightly wider), then the fill on top
+    canvas.drawPath(path, sweepBorder);
+    canvas.drawPath(path, sweepFill);
   }
 
   /// Get the drawing as an image. The function requires at least an background

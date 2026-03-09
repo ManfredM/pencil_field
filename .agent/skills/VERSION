@@ -1,0 +1,18 @@
+# Speckit Skills Version
+
+version: 1.1.0
+release_date: 2026-01-24
+
+## Changelog
+
+### 1.1.0 (2026-01-24)
+- New QA skills: tester, reviewer, checker
+- tester: Execute tests, measure coverage, report results
+- reviewer: Code review with severity levels and suggestions
+- checker: Static analysis aggregation (lint, types, security)
+
+### 1.0.0 (2026-01-24)
+- Initial versioned release
+- Core skills: specify, clarify, plan, tasks, implement, analyze, checklist, constitution, quizme, taskstoissues
+- New skills: diff, validate, migrate, status
+- All workflows enhanced with error handling and relative paths

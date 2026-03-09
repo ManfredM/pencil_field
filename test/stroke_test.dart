@@ -285,4 +285,182 @@ void main() {
       });
     }
   });
+
+  group('Point-to-segment distance', () {
+    test('Point on the segment returns distance 0', () {
+      // Point (10, 10) is on the segment from (0,0) to (20,20)
+      final result = PencilStroke.pointToSegmentDistance(
+        const Point(10, 10),
+        const Point(0, 0),
+        const Point(20, 20),
+      );
+      expect(result, closeTo(0.0, 0.001));
+    });
+
+    test('Point perpendicular to segment midpoint', () {
+      // Horizontal segment from (0,0) to (10,0), point at (5,3) => distance 3
+      final result = PencilStroke.pointToSegmentDistance(
+        const Point(5, 3),
+        const Point(0, 0),
+        const Point(10, 0),
+      );
+      expect(result, closeTo(3.0, 0.001));
+    });
+
+    test('Point beyond segment endpoint returns distance to nearest endpoint',
+        () {
+      // Segment from (0,0) to (10,0), point at (15,0) => distance 5 (to end)
+      final result = PencilStroke.pointToSegmentDistance(
+        const Point(15, 0),
+        const Point(0, 0),
+        const Point(10, 0),
+      );
+      expect(result, closeTo(5.0, 0.001));
+    });
+
+    test('Degenerate segment (start == end) returns distance to point', () {
+      // Segment from (5,5) to (5,5), point at (8,9) => distance 5
+      final result = PencilStroke.pointToSegmentDistance(
+        const Point(8, 9),
+        const Point(5, 5),
+        const Point(5, 5),
+      );
+      expect(result, closeTo(5.0, 0.001));
+    });
+  });
+
+  group('Stroke splitting by radius', () {
+    final paint = PencilPaint(color: Colors.black, strokeWidth: 2.0);
+
+    test('Eraser misses stroke entirely — returns original stroke', () {
+      final stroke = PencilStroke(
+        points: const [Point(0, 0), Point(10, 0), Point(20, 0)],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(0, 50), Point(20, 50)],
+        radius: 5.0,
+      );
+      expect(result.length, 1);
+      expect(result[0], same(stroke)); // Same object returned
+    });
+
+    test('Eraser covers entire stroke — returns empty list', () {
+      final stroke = PencilStroke(
+        points: const [Point(5, 0), Point(10, 0), Point(15, 0)],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      // Eraser path right on top with large radius
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(0, 0), Point(20, 0)],
+        radius: 5.0,
+      );
+      expect(result.length, 0);
+    });
+
+    test('Eraser crosses middle — returns two sub-strokes', () {
+      // Vertical stroke with widely-spaced points
+      final stroke = PencilStroke(
+        points: const [
+          Point(0, 0),
+          Point(0, 200),
+          Point(0, 400),
+          Point(0, 600),
+          Point(0, 800),
+        ],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      // Eraser at (30, 400) — 30 units right of point (0,400)
+      // with radius 35: the sweep body intersects the bezier curve
+      // near (0,400), producing two surviving sub-strokes
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(30, 400)],
+        radius: 35.0,
+      );
+      expect(result.length, 2);
+      // Each sub-stroke has multiple points (densely sampled)
+      expect(result[0].pointCount, greaterThanOrEqualTo(2));
+      expect(result[1].pointCount, greaterThanOrEqualTo(2));
+    });
+
+    test('Eraser covers one end — returns one shorter stroke', () {
+      // Vertical stroke with widely-spaced points
+      final stroke = PencilStroke(
+        points: const [
+          Point(0, 0),
+          Point(0, 200),
+          Point(0, 400),
+          Point(0, 600),
+        ],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      // Eraser centered at (0,100) with radius 101 — covers the
+      // start portion of the rendered curve
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(0, 100)],
+        radius: 101.0,
+      );
+      expect(result.length, 1);
+      expect(result[0].pointCount, greaterThanOrEqualTo(2));
+    });
+
+    test('Single-point stroke within radius — returns empty', () {
+      final stroke = PencilStroke(
+        points: const [Point(5, 5)],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(5, 5)],
+        radius: 1.0,
+      );
+      expect(result.length, 0);
+    });
+
+    test('Single-point stroke outside radius — returns original', () {
+      final stroke = PencilStroke(
+        points: const [Point(5, 5)],
+        bezierDistance: 1,
+        pencilPaint: paint,
+      );
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(50, 50)],
+        radius: 1.0,
+      );
+      expect(result.length, 1);
+      expect(result[0], same(stroke));
+    });
+
+    test('Split strokes preserve paint and bezier distance', () {
+      final customPaint = PencilPaint(color: Colors.red, strokeWidth: 4.0);
+      final stroke = PencilStroke(
+        points: const [
+          Point(0, 0),
+          Point(0, 50),
+          Point(0, 100),
+          Point(0, 150),
+          Point(0, 200),
+        ],
+        bezierDistance: 1,
+        pencilPaint: customPaint,
+      );
+      final result = stroke.splitByRadius(
+        eraserPoints: const [Point(5, 100)],
+        radius: 10.0,
+      );
+      expect(result.length, 2);
+      for (final splitStroke in result) {
+        expect(splitStroke.bezierDistance, 1);
+        expect(
+          PencilPaint.colorToInt(splitStroke.pencilPaint.paint.color),
+          PencilPaint.colorToInt(Colors.red),
+        );
+        expect(splitStroke.pencilPaint.paint.strokeWidth, 4.0);
+      }
+    });
+  });
 }
