@@ -92,4 +92,14 @@
 ## 0.4.10
 
 * **FIX** Requires Flutter 3.27.3 or higher
-  
+
+## 0.5.0
+
+* **FEATURE** Radius-based sweep eraser with accurate bezier curve intersection
+* **FEATURE** Sweep body visualization as semi-transparent orange polygon with round caps
+* **FEATURE** Eraser size picker via long-press (sizes 5–15) with visual indicator
+* **IMPROVEMENT** Boundary detection uses PathMetrics on actual rendered bezier curves
+* **IMPROVEMENT** Both stroke and eraser paths sampled as bezier curves for precise intersection
+* **FIX** setMode now allows radius updates when already in radiusErase mode
+* **DEVELOPMENT** CI runs all tests using exit code instead of hardcoded test count
+* **DEVELOPMENT** Golden reference images updated for current Flutter version
