@@ -33,6 +33,7 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
 
   PencilPaint pencilPaint = PencilPaint(color: Colors.black, strokeWidth: 2.0);
   PencilPaint writingPaint = PencilPaint(color: Colors.black, strokeWidth: 2.0);
+  double _eraserRadius = 10.0;
 
   void _onToolSelected(_PencilToolType type, PencilPaint newPaint) {
     setState(() {
@@ -48,7 +49,10 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
           pencilPaint = eraserPaint;
           break;
         case _PencilToolType.radiusEraser:
-          widget.controller.setMode(PencilMode.radiusErase, eraserRadius: 15.0);
+          widget.controller.setMode(
+            PencilMode.radiusErase,
+            eraserRadius: _eraserRadius,
+          );
           pencilPaint = PencilPaint(
             color: Colors.orange[300]!,
             strokeWidth: 2.0,
@@ -63,6 +67,69 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
         case _PencilToolType.undo:
           widget.controller.undo();
           break;
+      }
+    });
+  }
+
+  void _onRadiusEraserLongPress(BuildContext context, Offset position) {
+    showMenu<double>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy - 200,
+        position.dx + 1,
+        position.dy,
+      ),
+      items: List.generate(11, (i) {
+        final size = (i + 5).toDouble();
+        final isSelected = size == _eraserRadius;
+        return PopupMenuItem<double>(
+          value: size,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: isSelected
+                ? BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(8),
+                  )
+                : null,
+            child: Row(
+              children: [
+                Container(
+                  width: size * 2,
+                  height: size * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.orange[300],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '${size.toInt()}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          _eraserRadius = value;
+          widget.controller.setMode(
+            PencilMode.radiusErase,
+            eraserRadius: _eraserRadius,
+          );
+          pencilPaint = PencilPaint(
+            color: Colors.orange[300]!,
+            strokeWidth: 2.0,
+          );
+        });
       }
     });
   }
@@ -83,6 +150,8 @@ class _PencilFieldWithToolsState extends State<PencilFieldWithTools> {
               currentPaint: pencilPaint,
               currentMode: widget.controller.mode,
               onToolSelected: _onToolSelected,
+              onRadiusEraserLongPress: _onRadiusEraserLongPress,
+              eraserRadius: _eraserRadius,
             ),
             Container(
               decoration: const BoxDecoration(
@@ -120,10 +189,13 @@ class _PencilFieldTools extends StatelessWidget {
     required this.currentPaint,
     required this.currentMode,
     required this.onToolSelected,
+    this.onRadiusEraserLongPress,
+    this.eraserRadius = 10.0,
   });
 
   final PencilMode currentMode;
   final PencilPaint currentPaint;
+  final double eraserRadius;
   final eraserPaint = PencilPaint(
     color: PencilFieldColors.eraser,
     strokeWidth: 2.0,
@@ -139,6 +211,7 @@ class _PencilFieldTools extends StatelessWidget {
   ];
 
   final _OnToolSelectedCallback onToolSelected;
+  final void Function(BuildContext, Offset)? onRadiusEraserLongPress;
   final penColors = <Color>[
     PencilFieldColors.ink,
     PencilFieldColors.pencil,
@@ -215,6 +288,8 @@ class _PencilFieldTools extends StatelessWidget {
               ),
               onToolSelected: onToolSelected,
               currentPaint: currentPaint,
+              onLongPress: onRadiusEraserLongPress,
+              eraserRadius: eraserRadius,
             ),
             _ToolSelectorButton(
               type: _PencilToolType.undo,
@@ -234,16 +309,27 @@ class _ToolSelectorButton extends StatelessWidget {
     required this.onToolSelected,
     required this.pencilPaint,
     this.currentPaint,
+    this.onLongPress,
+    this.eraserRadius,
   });
 
   final PencilPaint? currentPaint;
   final _OnToolSelectedCallback onToolSelected;
   final PencilPaint pencilPaint;
   final _PencilToolType type;
+  final void Function(BuildContext, Offset)? onLongPress;
+  final double? eraserRadius;
 
   @override
   Widget build(BuildContext context) {
-    late Icon icon;
+    bool isActiveTool = false;
+    if (currentPaint != null) {
+      if (currentPaint!.paint.color.value == pencilPaint.paint.color.value) {
+        isActiveTool = true;
+      }
+    }
+
+    late Widget icon;
     switch (type) {
       case _PencilToolType.pen:
         icon = const Icon(LineAwesomeIcons.pen_solid);
@@ -255,7 +341,24 @@ class _ToolSelectorButton extends StatelessWidget {
         icon = const Icon(LineAwesomeIcons.eraser_solid);
         break;
       case _PencilToolType.radiusEraser:
-        icon = const Icon(Icons.radio_button_unchecked);
+        // Show a circle matching the size shown in the picker dialog
+        final displaySize = (eraserRadius ?? 10) * 2;
+        final circleColor =
+            isActiveTool ? Colors.white : pencilPaint.paint.color;
+        icon = SizedBox(
+          width: 24,
+          height: 24,
+          child: Center(
+            child: Container(
+              width: displaySize.clamp(6.0, 24.0),
+              height: displaySize.clamp(6.0, 24.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: circleColor, width: 2.5),
+              ),
+            ),
+          ),
+        );
         break;
       case _PencilToolType.clear:
         icon = const Icon(LineAwesomeIcons.trash_solid);
@@ -265,13 +368,7 @@ class _ToolSelectorButton extends StatelessWidget {
         break;
     }
 
-    bool isActiveTool = false;
-    if (currentPaint != null) {
-      if (currentPaint!.paint.color.value == pencilPaint.paint.color.value) {
-        isActiveTool = true;
-      }
-    }
-    return IconButton(
+    final button = IconButton(
       icon: icon,
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.all<Color>(
@@ -288,6 +385,16 @@ class _ToolSelectorButton extends StatelessWidget {
       ),
       onPressed: () => onToolSelected(type, pencilPaint),
     );
+
+    if (onLongPress != null) {
+      return GestureDetector(
+        onLongPressStart: (details) {
+          onLongPress!(context, details.globalPosition);
+        },
+        child: button,
+      );
+    }
+    return button;
   }
 }
 

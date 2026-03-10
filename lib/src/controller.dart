@@ -56,8 +56,9 @@ class PencilFieldController {
   }
 
   void setMode(PencilMode mode, {double? eraserRadius}) {
-    // Avoid unnecessary calls
-    if (_mode == mode) return;
+    // Avoid unnecessary calls (but allow radius updates in same mode)
+    if (_mode == mode &&
+        !(mode == PencilMode.radiusErase && eraserRadius != null)) return;
 
     _mode = mode;
     switch (_mode) {
