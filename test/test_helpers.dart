@@ -116,6 +116,7 @@ List<PencilStroke> generateHelloStrokes() {
 
 void writeImage(String fileName, Uint8List image) {
   File file = File(fileName);
+  file.parent.createSync(recursive: true);
   file.writeAsBytesSync(image, flush: true);
 }
 
